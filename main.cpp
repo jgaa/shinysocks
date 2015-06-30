@@ -16,10 +16,6 @@
 
 #include "shinysocks.h"
 
-/*
- * TODO: Add SOCKS5 support (TCP CONNECT as a start)
- * TODO: Port to Windows
- */
 
 using namespace std;
 using namespace shinysocks;
