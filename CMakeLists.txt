@@ -22,8 +22,10 @@ endif()
 
 if (WIN32)
 	include_directories(${BOOST_ROOT})
+	message(STATUS "Boost root: ${BOOST_ROOT}")
 	link_directories(${BOOST_LIBRARYDIR})
 	add_definitions(-D_WIN32_WINNT=0x0600)
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
     # Msvc and possible some other Windows-compilers will link
     # to the correct libraries trough #pragma directives in boost headers.
     #SET(BOOST_UNIT_TEST_FRAMEWORK libboost_test_exec_monitor-vc140-mt-sgd-1_57)
