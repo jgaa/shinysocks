@@ -72,7 +72,8 @@ int main(int argc, char **argv) {
         po::notify(vm);
 
         if (vm.count("help")) {
-            cout << cmdline_options << endl;
+            cout << GetProgramName() << ' ' << GetProgramVersion()
+				<< cmdline_options << endl;
             return -1;
         }
 

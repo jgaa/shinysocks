@@ -10,6 +10,9 @@
 
 namespace shinysocks {
 
+constexpr char *GetProgramName() { return "ShinySocks"; }
+constexpr char *GetProgramVersion() { return "1.00"; }
+
 class Closer
 {
 public:
