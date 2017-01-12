@@ -27,16 +27,18 @@ connections) are not yet supported.
 
 ## How I use it
 
-I start ShinySOCKS on the command-line (cmd.exe) ina Windows 7
+I start ShinySOCKS on the command-line (cmd.exe) in a Windows or Linux
 VM with VPN. Then I ssh to whatever servers on the VPN network
 I desire - using ShinySOCKS as a proxy.
 
 From Linux:
  $ ssh -o ProxyCommand='nc -x 192.168.0.10:1080 %h %p' jgaa@cool-server
 
-To avoid using a dedicated browser for VPN sites, I some times
+For accessing intranet web pages over the VPN, I some times
 use the [Foxy Proxy](https://getfoxyproxy.org/) Firefox plugin.
-It simplifies things, and make my work-flow smoother.
+It simplifies things, and make my work-flow smooth. This also
+improves my privacy, as the VPN host will only see the web traffic
+going to the intranet sites.
 
 ## License
 ShinySOCKS is released under GPLv3.
