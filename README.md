@@ -18,7 +18,7 @@ I tried a few free SOCKS servers. Neither of them worked, so
 therefore I'm spending a few hours writing my own.
 
 ## Current State
-The project is currently under initial development.
+The project is currently in maintainance mode. It just works.
 
 The SOCKS server works for SOCKS 4, 4a and 5 under
 Linux and Windows (compiled under Windows 7 with Visual
@@ -34,6 +34,9 @@ I desire - using ShinySOCKS as a proxy.
 From Linux:
  $ ssh -o ProxyCommand='nc -x 192.168.0.10:1080 %h %p' jgaa@cool-server
 
+To avoid using a dedicated browser for VPN sites, I some times
+use the [Foxy Proxy](https://getfoxyproxy.org/) Firefox plugin.
+It simplifies things, and make my work-flow smoother.
 
 ## License
 ShinySOCKS is released under GPLv3.
