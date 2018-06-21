@@ -30,7 +30,7 @@ pipeline {
             }
         }
 
-        stage('Push to DockertHub') {
+        stage('Push to Docker Hub') {
             steps {
                 withDockerRegistry([ credentialsId: "8cb91394-2af2-4477-8db8-8c0e13605900", url: "" ]) {
                     sh "docker push jgaafromnorth/shinysocks:v${env.BUILD_ID}"
