@@ -75,7 +75,10 @@ endif()
 
 
 add_executable(shinysocks Manager.cpp Listener.cpp Proxy.cpp main.cpp)
+target_compile_definitions(shinysocks PUBLIC -DBOOST_COROUTINE_NO_DEPRECATION_WARNING=1)
+target_compile_definitions(shinysocks PUBLIC -DBOOST_COROUTINES_NO_DEPRECATION_WARNING=1)
 target_link_libraries(shinysocks ${BOOST_LIBRARIES} ${THREADLIBS})
+
 
 install(TARGETS shinysocks RUNTIME DESTINATION bin)
 

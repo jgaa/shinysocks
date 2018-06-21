@@ -40,6 +40,15 @@ It simplifies things, and make my work-flow smooth. This also
 improves my privacy, as the VPN host will only see the web traffic
 going to the intranet sites.
 
+## Docker
+
+You can also pull a [Docker image](https://hub.docker.com/r/jgaafromnorth/shinysocks/)
+with the server from Docker Hub.
+
+```
+docker pull jgaafromnorth/shinysocks
+```
+
 ## License
 ShinySOCKS is released under GPLv3.
 It is Free.
