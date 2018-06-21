@@ -51,6 +51,4 @@ docker pull jgaafromnorth/shinysocks
 
 ## License
 ShinySOCKS is released under GPLv3.
-It is Free.
-Free as in Free Beer.
-Free as in Free Air.
+It is Free. Free as in speech. Free as in Free Air.
