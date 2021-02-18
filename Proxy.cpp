@@ -164,7 +164,7 @@ void Proxy::ParseV4Header(const char *buffer,
         }
         const char *host_end = host_start;
         while((host_end < buffer_end) && *host_end) {
-            ++buffer_end;
+            ++host_end;
             ++header_len;
         }
 
