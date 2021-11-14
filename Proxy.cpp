@@ -10,7 +10,7 @@ using boost::asio::ip::tcp;
 namespace shinysocks {
 
 Proxy::Proxy(tcp::socket&& sck)
-: client_(move(sck)), server_(client_.get_io_service())
+: client_(move(sck)), server_(client_.get_executor())
 {
 }
 
@@ -103,7 +103,7 @@ void Proxy::RunInt(boost::asio::yield_context& yield) {
 
 
     // Forward traffic from server to client
-    boost::asio::spawn(client_.get_io_service(),
+    boost::asio::spawn(client_.get_executor(),
                         bind(&Proxy::RelayRoot,
                             shared_from_this(),
                             ref(server_), ref(client_),
@@ -171,7 +171,7 @@ void Proxy::ParseV4Header(const char *buffer,
         const string host(host_start, host_end);
         BOOST_LOG_TRIVIAL(info) << "Will try to connect to: " << host;
 
-        tcp::resolver resolver(client_.get_io_service());
+        tcp::resolver resolver(client_.get_executor());
         auto address_it = resolver.async_resolve({host, to_string(port_)},
                                                     yield);
         decltype(address_it) addr_end;
@@ -313,7 +313,7 @@ again:
                     BOOST_LOG_TRIVIAL(info)
                         << "ParseV5Header: Will try to connect to: " << hostname;
 
-                    tcp::resolver resolver(client_.get_io_service());
+                    tcp::resolver resolver(client_.get_executor());
                     auto address_it = resolver.async_resolve({hostname, to_string(port_)},
                                                              yield);
                     decltype(address_it) addr_end;
