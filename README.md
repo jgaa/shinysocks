@@ -17,6 +17,9 @@ trough Putty works, kind of. It's slow and unreliable.
 I tried a few free SOCKS servers. Neither of them worked, so
 therefore I'm spending a few hours writing my own.
 
+## Blog posts mentioning the project
+- [My blog](https://lastviking.eu/_tags/shinysocks.html)
+
 ## Current State
 The project is currently in maintainance mode. It just works.
 
