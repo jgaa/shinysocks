@@ -56,6 +56,7 @@ int main(int argc, char **argv) {
 
         general.add_options()
             ("help,h", "Print help and exit")
+            ("version", "Print version and exit")
             ("config-file,c",
                 po::value<string>(&conf_file)->default_value(conf_file),
                 "Configuration file")
@@ -74,6 +75,11 @@ int main(int argc, char **argv) {
         if (vm.count("help")) {
             cout << GetProgramName() << ' ' << GetProgramVersion()
 				<< cmdline_options << endl;
+            return -1;
+        }
+
+        if (vm.count("version")) {
+            cout << GetProgramName() << ' ' << GetProgramVersion() << endl;
             return -1;
         }
 
@@ -107,6 +113,9 @@ int main(int argc, char **argv) {
     if (auto threads = opts.get_optional<int>("system.io-threads")) {
         conf.io_threads = *threads;
     }
+
+    BOOST_LOG_TRIVIAL(info) << GetProgramName() << ' ' << GetProgramVersion()
+                            << " starting up.";
 
     // Start acceptor(s)
     Manager manager(conf);

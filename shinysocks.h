@@ -11,7 +11,7 @@
 namespace shinysocks {
 
 constexpr const char *GetProgramName() { return "ShinySocks"; }
-constexpr const char *GetProgramVersion() { return "1.01"; }
+constexpr const char *GetProgramVersion() { return "1.02"; }
 
 class Closer
 {
