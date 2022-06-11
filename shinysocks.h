@@ -8,10 +8,16 @@
 #include <boost/asio/spawn.hpp>
 #include <memory>
 
+#if (BOOST_VERSION >= 106900)
+#   define GET_IO_SERVICE_OR_EXECURTOR() get_executor()
+#else
+#   define GET_IO_SERVICE_OR_EXECURTOR() get_io_service()
+#endif
+
 namespace shinysocks {
 
 constexpr const char *GetProgramName() { return "ShinySocks"; }
-constexpr const char *GetProgramVersion() { return "1.02"; }
+constexpr const char *GetProgramVersion() { return SHINYSOCKS_VERSION; }
 
 class Closer
 {

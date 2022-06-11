@@ -39,9 +39,8 @@ void Listener::StartAcceptingInt(boost::asio::io_service& ios,
 
             BOOST_LOG_TRIVIAL(info) << "Incoming connection on socket.";
 
-            auto& ios = socket.get_io_service();
             auto proxy = make_shared<Proxy>(move(socket));
-            boost::asio::spawn(ios,
+            boost::asio::spawn(socket.GET_IO_SERVICE_OR_EXECURTOR(),
                                bind(&Proxy::Run,
                                     proxy,
                                     std::placeholders::_1));

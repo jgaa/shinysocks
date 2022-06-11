@@ -1,6 +1,18 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.0)
 project(shinysocks)
 
+project (shinysocks VERSION 0.0.27 LANGUAGES CXX)
+
+option(BOOST_ERROR_CODE_HEADER_ONLY "Work-around for another boost issue" ON)
+if (BOOST_ERROR_CODE_HEADER_ONLY)
+    add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY=1)
+endif()
+
+add_definitions(-DSHINYSOCKS_VERSION=\"${CMAKE_PROJECT_VERSION}\")
+
+if(NOT DEFINED USE_BOOST_VERSION)
+    set(USE_BOOST_VERSION 1.65)
+endif()
 
 set(Boost_USE_MULTITHREADED ON)
 if (UNIX)
@@ -75,8 +87,8 @@ endif()
 
 
 add_executable(shinysocks Manager.cpp Listener.cpp Proxy.cpp main.cpp)
-target_compile_definitions(shinysocks PUBLIC -DBOOST_COROUTINE_NO_DEPRECATION_WARNING=1)
-target_compile_definitions(shinysocks PUBLIC -DBOOST_COROUTINES_NO_DEPRECATION_WARNING=1)
+## Boost libraries tend to use boost depricated stuff and create lots of drama in the compile output
+target_compile_definitions(shinysocks PUBLIC -DBOOST_COROUTINE_NO_DEPRECATION_WARNING=1 -DBOOST_ALLOW_DEPRECATED_HEADERS=1 -DBOOST_COROUTINES_NO_DEPRECATION_WARNING=1)
 target_link_libraries(shinysocks ${BOOST_LIBRARIES} ${THREADLIBS})
 
 
