@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(shinysocks)
 
-project (shinysocks VERSION 0.0.27 LANGUAGES CXX)
+project (shinysocks VERSION 1.3.0 LANGUAGES CXX)
 
 option(BOOST_ERROR_CODE_HEADER_ONLY "Work-around for another boost issue" ON)
 if (BOOST_ERROR_CODE_HEADER_ONLY)
