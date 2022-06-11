@@ -48,9 +48,16 @@ going to the intranet sites.
 You can also pull a [Docker image](https://hub.docker.com/r/jgaafromnorth/shinysocks/)
 with the server from Docker Hub.
 
-```
+```sh
 docker pull jgaafromnorth/shinysocks
 ```
+
+To run it.
+```sh
+docker run --rm --name shiny -p 1080:1080 -d jgaafromnorth/shinysocks
+```
+
+You can now set the socks 5 address to ip `172.17.0.1` port `1080` in your applications (for example Firefox') proxy settings and test it.
 
 ## License
 ShinySOCKS is released under GPLv3.
