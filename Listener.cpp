@@ -1,8 +1,6 @@
 
-#include <boost/log/trivial.hpp>
-
 #include "shinysocks.h"
-
+#include "logging.h"
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -17,7 +15,7 @@ Listener::Listener(Manager& manager,
 
 void Listener::StartAccepting() {
 
-    BOOST_LOG_TRIVIAL(info) << "Listener on " << endpoint_;
+    LOG_INFO << "Listener on " << endpoint_;
 
     auto& ios = manager_.GetSomeIoService();
 
@@ -37,7 +35,7 @@ void Listener::StartAcceptingInt(boost::asio::io_service& ios,
             tcp::socket socket(manager_.GetSomeIoService());
             acceptor.async_accept(socket, yield);
 
-            BOOST_LOG_TRIVIAL(info) << "Incoming connection on socket.";
+            LOG_INFO << "Incoming connection on socket.";
 
             auto proxy = make_shared<Proxy>(move(socket));
             boost::asio::spawn(socket.GET_IO_SERVICE_OR_EXECURTOR(),
@@ -46,10 +44,10 @@ void Listener::StartAcceptingInt(boost::asio::io_service& ios,
                                     std::placeholders::_1));
         }
     } catch(const std::exception& ex) {
-        BOOST_LOG_TRIVIAL(error) << "StartAccepting: Caught exception: "
+        LOG_ERROR << "StartAccepting: Caught exception: "
             << ex.what() ;
     } catch(const boost::exception& ex) {
-        BOOST_LOG_TRIVIAL(error) << "StartAccepting: Caught boost exception: "
+        LOG_ERROR << "StartAccepting: Caught boost exception: "
             << boost::diagnostic_information(ex);
     }
 }

@@ -1,7 +1,6 @@
 
-#include <boost/log/trivial.hpp>
-
 #include "shinysocks.h"
+#include "logging.h"
 
 /* TODO: Add handling of all open connections so we can output some nice stats
  */
@@ -27,7 +26,7 @@ void Manager::Thread::Start() {
 }
 
 void Manager::Thread::Run() {
-    BOOST_LOG_TRIVIAL(debug) << "Run: Starting io_service in one thread";
+    LOG_DEBUG << "Run: Starting io_service in one thread";
 
     // Keep the io-service running, also when the queue is empty
     boost::asio::io_service::work work(io_service_);
@@ -35,7 +34,7 @@ void Manager::Thread::Run() {
     // Run the io-service
     io_service_.run();
 
-    BOOST_LOG_TRIVIAL(debug) << "Run: Ended io_service in one thread";
+    LOG_DEBUG << "Run: Ended io_service in one thread";
 }
 
 void Manager::WaitForAllThreads() {

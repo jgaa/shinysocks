@@ -1,8 +1,8 @@
 
-#include <boost/log/trivial.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
 #include "shinysocks.h"
+#include "logging.h"
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -15,21 +15,21 @@ Proxy::Proxy(tcp::socket&& sck)
 }
 
 Proxy::~Proxy() {
-    BOOST_LOG_TRIVIAL(debug) << "Leaving ~Proxy()";
+    LOG_DEBUG << "Leaving ~Proxy()";
 }
 
 void Proxy::Run(boost::asio::yield_context yield) {
     try {
         RunInt(yield);
     } catch(const exception& ex) {
-        BOOST_LOG_TRIVIAL(error) << "Proxy: Caught exception: " << ex.what();
+        LOG_ERROR << "Proxy: Caught exception: " << ex.what();
     } catch(const boost::exception& ex) {
-        BOOST_LOG_TRIVIAL(error) << "Proxy: Caught exception: "
+        LOG_ERROR << "Proxy: Caught exception: "
             << boost::diagnostic_information(ex);
     }
 
 
-    BOOST_LOG_TRIVIAL(info) << "Proxy done. Sent "
+    LOG_INFO << "Proxy done. Sent "
         << bytes_relayed_to_server_
         << " bytes, received " << bytes_relayed_to_client_ << " bytes.";
 
@@ -38,11 +38,11 @@ void Proxy::Run(boost::asio::yield_context yield) {
     if (server_.is_open())
         server_.close();
 
-    BOOST_LOG_TRIVIAL(debug) << "Proxy::Run coroutine is done";
+    LOG_DEBUG << "Proxy::Run coroutine is done";
 }
 
 void Proxy::RunInt(boost::asio::yield_context& yield) {
-    BOOST_LOG_TRIVIAL(info) << "Proxy starting on socket " << client_.local_endpoint()
+    LOG_INFO << "Proxy starting on socket " << client_.local_endpoint()
         << "<-->" << client_.remote_endpoint();
 
     client_.set_option(tcp::no_delay(true));
@@ -54,7 +54,7 @@ void Proxy::RunInt(boost::asio::yield_context& yield) {
             boost::asio::buffer(buffer, sizeof(buffer)), yield);
 
         if (len < 2) {
-            BOOST_LOG_TRIVIAL(error) << "Received too few bytes";
+            LOG_ERROR << "Received too few bytes";
             throw runtime_error("Invalid connect header");
         }
 
@@ -66,13 +66,13 @@ void Proxy::RunInt(boost::asio::yield_context& yield) {
         command_ = buffer[1];
 
         if (protocol_ver_ == ProtocolVer::SOCKS4) {
-            BOOST_LOG_TRIVIAL(debug) << "Client is requesting SOCKS4";
+            LOG_DEBUG << "Client is requesting SOCKS4";
             ParseV4Header(buffer, len, yield);
         } else if (protocol_ver_ == ProtocolVer::SOCKS5) {
-            BOOST_LOG_TRIVIAL(debug) << "Client is requesting SOCKS5";
+            LOG_DEBUG << "Client is requesting SOCKS5";
             ParseV5Header(buffer, len, yield);
         } else {
-            BOOST_LOG_TRIVIAL(error) << "Invalid protocol version "
+            LOG_ERROR << "Invalid protocol version "
                 << static_cast<int>(buffer[0]);
 
             throw runtime_error("Invalid protocol version");
@@ -82,7 +82,7 @@ void Proxy::RunInt(boost::asio::yield_context& yield) {
     // Do what we are asked
     if (command_ == static_cast<int>(Commands::CONNECT)) {
         // Connect to the requested endpoint
-        BOOST_LOG_TRIVIAL(info) << "Connecting to endpoint " << endpoint_;
+        LOG_INFO << "Connecting to endpoint " << endpoint_;
 
         try {
             server_.async_connect(endpoint_, yield);
@@ -113,7 +113,7 @@ void Proxy::RunInt(boost::asio::yield_context& yield) {
     // Send whatever that was left of data after the header was parsed
     if (!remaining_buffer_.empty()) {
 
-        BOOST_LOG_TRIVIAL(info) << "Sending " << remaining_buffer_.size()
+        LOG_INFO << "Sending " << remaining_buffer_.size()
             << " remaining bytes";
 
         boost::asio::async_write(server_, boost::asio::buffer(
@@ -135,7 +135,7 @@ void Proxy::ParseV4Header(const char *buffer,
     const char *buffer_end = buffer + len;
 
     if (len < header_len) {
-        BOOST_LOG_TRIVIAL(error) << "ParseV4Header: Received too few bytes";
+        LOG_ERROR << "ParseV4Header: Received too few bytes";
         throw runtime_error("Invalid connect header");
     }
 
@@ -169,7 +169,7 @@ void Proxy::ParseV4Header(const char *buffer,
         }
 
         const string host(host_start, host_end);
-        BOOST_LOG_TRIVIAL(info) << "Will try to connect to: " << host;
+        LOG_INFO << "Will try to connect to: " << host;
 
         tcp::resolver resolver(client_.GET_IO_SERVICE_OR_EXECURTOR());
         auto address_it = resolver.async_resolve({host, to_string(port_)},
@@ -187,7 +187,7 @@ void Proxy::ParseV4Header(const char *buffer,
         boost::asio::ip::address_v4 addr(ipv4_);
         endpoint_ = tcp::endpoint(addr, port_);
 
-        BOOST_LOG_TRIVIAL(debug) << "Will try to connect to ipv4 supplied address: "
+        LOG_DEBUG << "Will try to connect to ipv4 supplied address: "
             << endpoint_;
     }
 
@@ -253,7 +253,7 @@ again:
         header_len = 6; // Minimum header length, excluding address field
 
         if (hdr_buffer[0] != 5) {
-            BOOST_LOG_TRIVIAL(error) << "ParseV5Header: Invalid protocol version "
+            LOG_ERROR << "ParseV5Header: Invalid protocol version "
                 << static_cast<int>(hdr_buffer[0]);
 
             throw runtime_error("Invalid protocol version");
@@ -276,7 +276,7 @@ again:
                     boost::asio::ip::address_v4 addr(ipv4_);
                     endpoint_ = tcp::endpoint(addr, port_);
 
-                    BOOST_LOG_TRIVIAL(debug) << "ParseV5Header: IPv4 endpoint: "
+                    LOG_DEBUG << "ParseV5Header: IPv4 endpoint: "
                         << endpoint_;
                     done = true;
                 }
@@ -299,7 +299,7 @@ again:
                     // TODO: Validate the name
 
                     if (hostname.empty()) {
-                        BOOST_LOG_TRIVIAL(debug) << "ParseV5Header: No hostname!";
+                        LOG_DEBUG << "ParseV5Header: No hostname!";
                         Reply(ReplyVal::REJECTED, {}, yield);
                         throw runtime_error("No hostname!");
                     }
@@ -307,7 +307,7 @@ again:
                     const uint16_t *port = reinterpret_cast<const uint16_t *>(&hdr_buffer[header_len-2]);
                     port_ = htons(*port);
 
-                    BOOST_LOG_TRIVIAL(info)
+                    LOG_INFO
                         << "ParseV5Header: Will try to connect to: " << hostname;
 
                     tcp::resolver resolver(client_.GET_IO_SERVICE_OR_EXECURTOR());
@@ -322,7 +322,7 @@ again:
 
                     endpoint_ = *address_it;
 
-                    BOOST_LOG_TRIVIAL(debug) << "ParseV5Header: host-lookup endpoint: "
+                    LOG_DEBUG << "ParseV5Header: host-lookup endpoint: "
                         << endpoint_;
                     done = true;
                 }
@@ -331,7 +331,7 @@ again:
                 Reply(ReplyVal::ADDR_NOT_SUPPORTED, {}, yield);
                 throw runtime_error("IPv6 not supported at this time");
             default:
-                BOOST_LOG_TRIVIAL(error) << "ParseV5Header: Invalid address type "
+                LOG_ERROR << "ParseV5Header: Invalid address type "
                 << static_cast<int>(hdr_buffer[3]);
 
                 throw runtime_error("Invalid address type");
@@ -353,14 +353,14 @@ void Proxy::RelayRoot(tcp::socket& from,
     try {
         Relay(from, to, counter, yield);
     } catch(const exception& ex) {
-        BOOST_LOG_TRIVIAL(error) << "Proxy::RelayRoot: Caught exception: "
+        LOG_ERROR << "Proxy::RelayRoot: Caught exception: "
             << ex.what();
     } catch(const boost::exception& ex) {
-        BOOST_LOG_TRIVIAL(error) << "Proxy::RelayRoot: Caught boost exception: "
+        LOG_ERROR << "Proxy::RelayRoot: Caught boost exception: "
             << boost::diagnostic_information(ex);
     }
 
-    BOOST_LOG_TRIVIAL(debug) << "Proxy::RelayRoot coroutine is done";
+    LOG_DEBUG << "Proxy::RelayRoot coroutine is done";
 }
 
 void Proxy::Relay(tcp::socket& from,

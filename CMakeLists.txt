@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(shinysocks)
 
-project (shinysocks VERSION 1.3.0 LANGUAGES CXX)
+project (shinysocks VERSION 1.3.1 LANGUAGES CXX)
 
 option(BOOST_ERROR_CODE_HEADER_ONLY "Work-around for another boost issue" ON)
 if (BOOST_ERROR_CODE_HEADER_ONLY)
@@ -9,6 +9,8 @@ if (BOOST_ERROR_CODE_HEADER_ONLY)
 endif()
 
 add_definitions(-DSHINYSOCKS_VERSION=\"${CMAKE_PROJECT_VERSION}\")
+
+include(cmake/external-projects.cmake)
 
 if(NOT DEFINED USE_BOOST_VERSION)
     set(USE_BOOST_VERSION 1.65)
@@ -27,7 +29,6 @@ find_package(Boost REQUIRED COMPONENTS
     context
     coroutine
     chrono
-    log
     thread
     )
 endif()
@@ -86,7 +87,8 @@ if (UNIX)
 endif()
 
 
-add_executable(shinysocks Manager.cpp Listener.cpp Proxy.cpp main.cpp)
+add_executable(shinysocks Manager.cpp Listener.cpp Proxy.cpp main.cpp shinysocks.h logging.h)
+add_dependencies(shinysocks externalLogfault)
 ## Boost libraries tend to use boost depricated stuff and create lots of drama in the compile output
 target_compile_definitions(shinysocks PUBLIC -DBOOST_COROUTINE_NO_DEPRECATION_WARNING=1 -DBOOST_ALLOW_DEPRECATED_HEADERS=1 -DBOOST_COROUTINES_NO_DEPRECATION_WARNING=1)
 target_link_libraries(shinysocks ${BOOST_LIBRARIES} ${THREADLIBS})

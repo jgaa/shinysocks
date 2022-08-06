@@ -3,19 +3,9 @@
 #include <boost/program_options.hpp>
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/support/date_time.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-
 
 #include "shinysocks.h"
-
+#include "logging.h"
 
 using namespace std;
 using namespace shinysocks;
@@ -32,12 +22,12 @@ void SleepUntilDoomdsay()
         );
     signals.async_wait([](boost::system::error_code /*ec*/, int signo) {
 
-        BOOST_LOG_TRIVIAL(info) << "Reiceived signal " << signo << ". Shutting down";
+        LOG_INFO << "Reiceived signal " << signo << ". Shutting down";
     });
 
-    BOOST_LOG_TRIVIAL(debug) << "Main thread going to sleep - waiting for shtudown signal";
+    LOG_DEBUG << "Main thread going to sleep - waiting for shtudown signal";
     main_thread_service.run();
-    BOOST_LOG_TRIVIAL(debug) << "Main thread is awake";
+    LOG_DEBUG << "Main thread is awake";
 }
 
 int main(int argc, char **argv) {
@@ -50,6 +40,7 @@ int main(int argc, char **argv) {
     vector<unique_ptr<Listener>> listeners;
 
     {
+        std::string log_level = "info";
         std::string conf_file = "shinysocks.conf";
 
         po::options_description general("General Options");
@@ -63,6 +54,9 @@ int main(int argc, char **argv) {
 #ifndef WIN32
             ("daemon",  po::value<bool>(&run_as_daemon), "Run as a system daemon")
 #endif
+            ("log-level,l",
+                 po::value<string>(&log_level)->default_value(log_level),
+                 "Log-level to use; one of 'info', 'debug', 'trace'")
             ;
 
         po::options_description cmdline_options;
@@ -83,8 +77,20 @@ int main(int argc, char **argv) {
             return -1;
         }
 
+        auto llevel = logfault::LogLevel::INFO;
+        if (log_level == "debug") {
+            llevel = logfault::LogLevel::DEBUGGING;
+        } else if (log_level == "trace") {
+            llevel = logfault::LogLevel::TRACE;
+        } else if (log_level == "info") {
+            ;  // Do nothing
+        } else {
+            std::cerr << "Unknown log-level: " << log_level << endl;
+            return -1;
+        }
+
         if (!boost::filesystem::exists(conf_file)) {
-            BOOST_LOG_TRIVIAL(error) << "*** The configuration-file '"
+            cerr << "*** The configuration-file '"
                 << conf_file
                 << "' does not exist.";
             return -1;
@@ -93,20 +99,15 @@ int main(int argc, char **argv) {
 
         if (auto log_file = opts.get_optional<string>("log.file")) {
             cout << "Opening log-file: " << *log_file << endl;
-            //boost::log::add_file_log(log_file->c_str());
-
-            boost::log::add_file_log(
-                boost::log::keywords::file_name = *log_file,
-                boost::log::keywords::target = "boost_logs",
-                boost::log::keywords::format = "%TimeStamp% %ThreadID% %Severity%: %Message%",
-                boost::log::keywords::auto_flush = true
-            );
-
-            boost::log::add_common_attributes();
-
-            boost::log::core::get()->set_filter (
-                boost::log::trivial::severity >= boost::log::trivial::debug);
+            logfault::LogManager::Instance().AddHandler(
+                        make_unique<logfault::StreamHandler>(*log_file, llevel));
+        } else {
+            logfault::LogManager::Instance().AddHandler(
+                        make_unique<logfault::StreamHandler>(clog, llevel));
         }
+
+        LOG_INFO << GetProgramName() << ' ' << GetProgramVersion()
+                                << " starting up. Log level: " << log_level;
     }
 
     Manager::Conf conf;
@@ -114,8 +115,6 @@ int main(int argc, char **argv) {
         conf.io_threads = *threads;
     }
 
-    BOOST_LOG_TRIVIAL(info) << GetProgramName() << ' ' << GetProgramVersion()
-                            << " starting up.";
 
     // Start acceptor(s)
     Manager manager(conf);
@@ -126,7 +125,7 @@ int main(int argc, char **argv) {
             auto host = node.second.get<string>("hostname");
             auto port = node.second.get<string>("port");
 
-            BOOST_LOG_TRIVIAL(error) << "Resolving host=" << host << ", port=" << port;
+            LOG_INFO << "Resolving host=" << host << ", port=" << port;
 
             tcp::resolver resolver(io_service);
             auto address_it = resolver.resolve({host, port});
@@ -142,7 +141,7 @@ int main(int argc, char **argv) {
 
 #ifndef WIN32
     if (run_as_daemon) {
-        BOOST_LOG_TRIVIAL(info) << "Switching to system daemon mode";
+        LOG_INFO << "Switching to system daemon mode";
         daemon(1, 0);
     }
 #endif
