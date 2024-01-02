@@ -1,22 +1,22 @@
-cmake_minimum_required(VERSION 3.0)
-project(shinysocks)
+cmake_minimum_required(VERSION 3.20)
 
-project (shinysocks VERSION 1.3.1 LANGUAGES CXX)
-
-option(BOOST_ERROR_CODE_HEADER_ONLY "Work-around for another boost issue" ON)
-if (BOOST_ERROR_CODE_HEADER_ONLY)
-    add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY=1)
-endif()
+project(shinysocks
+    DESCRIPTION "Socks Proxy server"
+    HOMEPAGE_URL https://github.com/jgaa/shinysocks
+    VERSION 1.3.1
+    LANGUAGES CXX
+)
 
 add_definitions(-DSHINYSOCKS_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
-include(cmake/external-projects.cmake)
+include(cmake/3rdparty.cmake)
+
+find_package(Threads REQUIRED)
 
 if(NOT DEFINED USE_BOOST_VERSION)
-    set(USE_BOOST_VERSION 1.65)
+    set(USE_BOOST_VERSION 1.69)
 endif()
 
-set(Boost_USE_MULTITHREADED ON)
 if (UNIX)
 find_package(Boost REQUIRED COMPONENTS
     system
@@ -33,65 +33,17 @@ find_package(Boost REQUIRED COMPONENTS
     )
 endif()
 
-if (WIN32)
-	include_directories(${BOOST_ROOT})
-	message(STATUS "Boost root: ${BOOST_ROOT}")
-	link_directories(${BOOST_LIBRARYDIR})
-	add_definitions(-D_WIN32_WINNT=0x0600)
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
-    # Msvc and possible some other Windows-compilers will link
-    # to the correct libraries trough #pragma directives in boost headers.
-    #SET(BOOST_UNIT_TEST_FRAMEWORK libboost_test_exec_monitor-vc140-mt-sgd-1_57)
-else ()
-    set(LIB_BOOST_PROGRAM_OPTIONS boost_program_options)
-    set(LIB_BOOST_SERIALIZATION boost_serialization)
-    set(LIB_BOOST_FILESYSTEM boost_filesystem)
-    set(LIB_BOOST_DATE_TIME boost_date_time)
-    set(LIB_BOOST_IOSTREAMS boost_iostreams)
-    set(LIB_BOOST_SYSTEM boost_system)
-    set(LIB_BOOST_REGEX boost_regex)
-    set(LIB_BOOST_CONTEXT boost_context)
-    set(LIB_BOOST_COROUTINE boost_coroutine)
-    set(LIB_BOOST_CHRONO boost_chrono)
-    set(LIB_BOOST_THREAD boost_thread)
-    set(LIB_BOOST_LOG boost_log boost_log_setup)
-    SET(BOOST_UNIT_TEST_FRAMEWORK boost_unit_test_framework)
-endif ()
-
-if (UNIX)
-    set (BOOST_LIBRARIES
-        ${LIB_BOOST_SYSTEM}
-        ${LIB_BOOST_PROGRAM_OPTIONS}
-        ${LIB_BOOST_SERIALIZATION}
-        ${LIB_BOOST_FILESYSTEM}
-        ${LIB_BOOST_DATE_TIME}
-        ${LIB_BOOST_IOSTREAMS}
-        ${LIB_BOOST_REGEX}
-        ${LIB_BOOST_CONTEXT}
-        ${LIB_BOOST_COROUTINE}
-        ${LIB_BOOST_CHRONO}
-        ${LIB_BOOST_LOG}
-        ${LIB_BOOST_THREAD}
-    )
-endif()
-
-if (UNIX)
-    set(THREADLIBS pthread)
-endif()
-
-if (UNIX)
-  # For now, assume we use g++/clang++
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG=1 -o3 ")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG=1 -D_DEBUG=1 -o0 -g ")
-    add_definitions(-D__USE_LARGEFILE64=1 -D__USE_FILE_OFFSET64=1 -D BOOST_LOG_DYN_LINK -Wall -fPIC -std=c++1y -pthread)
-endif()
-
-
-add_executable(shinysocks Manager.cpp Listener.cpp Proxy.cpp main.cpp shinysocks.h logging.h)
-add_dependencies(shinysocks externalLogfault)
+add_executable(${PROJECT_NAME} Manager.cpp Listener.cpp Proxy.cpp main.cpp shinysocks.h logging.h)
+add_dependencies(${PROJECT_NAME} logfault)
 ## Boost libraries tend to use boost depricated stuff and create lots of drama in the compile output
-target_compile_definitions(shinysocks PUBLIC -DBOOST_COROUTINE_NO_DEPRECATION_WARNING=1 -DBOOST_ALLOW_DEPRECATED_HEADERS=1 -DBOOST_COROUTINES_NO_DEPRECATION_WARNING=1)
-target_link_libraries(shinysocks ${BOOST_LIBRARIES} ${THREADLIBS})
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        $<BUILD_INTERFACE:${Boost_LIBRARIES}>
+#        $<BUILD_INTERFACE:${stdc++fs}>
+        $<BUILD_INTERFACE:Threads::Threads>
+    )
+
 
 
 install(TARGETS shinysocks RUNTIME DESTINATION bin)
