@@ -1,8 +1,9 @@
+
+#include <filesystem>
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/program_options.hpp>
 #include <boost/property_tree/info_parser.hpp>
-#include <boost/filesystem.hpp>
 
 #include "shinysocks.h"
 #include "logging.h"
@@ -89,7 +90,7 @@ int main(int argc, char **argv) {
             return -1;
         }
 
-        if (!boost::filesystem::exists(conf_file)) {
+        if (!std::filesystem::exists(conf_file)) {
             cerr << "*** The configuration-file '"
                 << conf_file
                 << "' does not exist.";
@@ -134,7 +135,7 @@ int main(int argc, char **argv) {
             for(; address_it != addr_end; ++address_it) {
                 auto iface = make_unique<Listener>(manager, *address_it);
                 iface->StartAccepting();
-                listeners.push_back(move(iface));
+                listeners.push_back(std::move(iface));
             }
         }
     }
@@ -147,7 +148,8 @@ int main(int argc, char **argv) {
 #endif
 
 
-    // Wait for signal
+    // Wait for signallibboost-system1.81.0 libboost-program-options1.81.0 \
+    libboost-filesystem1.81.0 libboost-coroutine1.81.0
     SleepUntilDoomdsay();
 
     manager.Shutdown();

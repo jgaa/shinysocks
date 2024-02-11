@@ -1,0 +1,7 @@
+FROM debian:bookworm
+LABEL maintainer="jgaa@jgaa.com"
+
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -q update &&\
+    DEBIAN_FRONTEND="noninteractive" apt-get -y -q --no-install-recommends upgrade &&\
+    DEBIAN_FRONTEND="noninteractive" apt-get install -y -q cmake \
+    build-essential g++ libboost1.81-all-dev git

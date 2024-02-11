@@ -17,34 +17,30 @@ if(NOT DEFINED USE_BOOST_VERSION)
     set(USE_BOOST_VERSION 1.69)
 endif()
 
-if (UNIX)
 find_package(Boost REQUIRED COMPONENTS
     system
     program_options
     serialization
-    filesystem
-    date_time
-    iostreams
-    regex
     context
     coroutine
-    chrono
-    thread
     )
-endif()
 
 add_executable(${PROJECT_NAME} Manager.cpp Listener.cpp Proxy.cpp main.cpp shinysocks.h logging.h)
 add_dependencies(${PROJECT_NAME} logfault)
-## Boost libraries tend to use boost depricated stuff and create lots of drama in the compile output
+
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         $<BUILD_INTERFACE:${Boost_LIBRARIES}>
-#        $<BUILD_INTERFACE:${stdc++fs}>
+        $<BUILD_INTERFACE:${stdc++fs}>
         $<BUILD_INTERFACE:Threads::Threads>
     )
-
-
 
 install(TARGETS shinysocks RUNTIME DESTINATION bin)
 
