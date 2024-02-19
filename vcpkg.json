@@ -8,7 +8,8 @@
     "boost-serialization",
     "boost-context",
     "boost-coroutine",
-    "boost-asio"
+    "boost-asio",
+    "boost-property-tree"
   ],
   "builtin-baseline": "345ac44ab8d6a16239d3af55df9608bf725e7a48"
 }

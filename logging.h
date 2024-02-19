@@ -4,9 +4,18 @@ namespace nextapp::logging {
 
 } // ns
 
-#define LOGFAULT_USE_TID_AS_NAME 1
+
+#if !defined(WIN32) && __has_include(<sys/syscall.h>)
+#	define LOGFAULT_USE_TID_AS_NAME 1
+#endif
+
+#ifdef ERROR
+	// Thank you SO much Microsoft!
+#   undef ERROR
+#endif
 
 #include "logfault/logfault.h"
+
 
 #define LOG_ERROR   LFLOG_ERROR
 #define LOG_WARN    LFLOG_WARN

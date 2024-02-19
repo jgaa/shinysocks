@@ -147,9 +147,6 @@ int main(int argc, char **argv) {
     }
 #endif
 
-
-    // Wait for signallibboost-system1.81.0 libboost-program-options1.81.0 \
-    libboost-filesystem1.81.0 libboost-coroutine1.81.0
     SleepUntilDoomdsay();
 
     manager.Shutdown();
