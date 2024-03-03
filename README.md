@@ -1,5 +1,7 @@
 # ShinySOCKS
 
+![CI](https://github.com/jgaa/shinysocks/actions/workflows/ci.yml/badge.svg?branch=fix-cmake)
+
 ## Mission Statement
 
 *To create a small, ultra-fast SOCKS proxy server that just works.

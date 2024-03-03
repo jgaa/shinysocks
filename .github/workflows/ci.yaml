@@ -9,15 +9,17 @@ jobs:
       matrix:
         #os: [ubuntu-latest, windows-latest, macos-latest]
         os:
-#          - windows-latest
+          - windows-latest
           - ubuntu-latest
-#          - macos-latest
+          - macos-latest
         compiler:
           - gcc
           # you can specify the version after `-` like `llvm-13.0.0`.
         # include:
-        #   - os: "windows-latest"
-        #     compiler: "msvc"
+          - os: "windows-latest"
+            compiler: "msvc"
+          - os: "macos-latest"
+            compiler: "llvm"
 
     steps:
       - name: Checkout code
