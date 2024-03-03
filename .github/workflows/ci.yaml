@@ -65,10 +65,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ${{ github.workspace }}/vcpkg/vcpkg install
+          ${{ env.HOME }}/vcpkg/vcpkg install
 
       - name: Prepate the PATH
-        run: echo "${{ github.workspace }}/ninja" >> $GITHUB_PATH
+        run: echo "${{ env.HOME }}/ninja" >> $GITHUB_PATH
 
       - name: Build project
         run: |
