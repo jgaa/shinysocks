@@ -57,6 +57,6 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake ..  -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_SYSTEM_PROGRAM_PATH=${{ env.PATH }}:/home/runner/ninja
           cmake --build .
 
