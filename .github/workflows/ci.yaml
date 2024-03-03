@@ -16,7 +16,7 @@ jobs:
         submodules: true
 
     - name: Setup C++
-      uses: actions/setup-cpp@v0.37.0
+      uses: aminya/setup-cpp@v1
       with:
         version: '3.x'
 
