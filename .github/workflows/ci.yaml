@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Setup C++
+      uses: actions/setup-cpp@v1
+      with:
+        version: '3.x'
+
+    - name: Cache vcpkg
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.vcpkg
+          vcpkg
+        key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+
+    - name: Install vcpkg
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        ./vcpkg/bootstrap-vcpkg.sh
+
+    - name: Install dependencies
+      run: |
+        ./vcpkg/vcpkg install
+
+    - name: Build project
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
+        cmake --build .
