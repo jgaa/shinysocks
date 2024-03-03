@@ -54,12 +54,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ~/vcpkg/vcpkg install
+          ${{ github.workspace }}/vcpkg/vcpkg install
+
+      - name: Prepate the PATH
+         run: echo "${{ github.workspace }}/ninja" >> $GITHUB_PATH
 
       - name: Build project
         run: |
           mkdir build
           cd build
-          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_SYSTEM_PROGRAM_PATH=${{ env.PATH }}:/home/runner/ninja
+          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
 
