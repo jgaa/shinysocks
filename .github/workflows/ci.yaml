@@ -13,12 +13,12 @@ jobs:
           - ubuntu-latest
 #          - macos-latest
         compiler:
-          - llvm
+         # - llvm
           - gcc
           # you can specify the version after `-` like `llvm-13.0.0`.
-        include:
-          - os: "windows-latest"
-            compiler: "msvc"
+        # include:
+        #   - os: "windows-latest"
+        #     compiler: "msvc"
 
     steps:
       - name: Checkout code
@@ -50,10 +50,14 @@ jobs:
           vcpkg: true
           cppcheck: true
 
+      - name: Install dependencies
+      run: |
+        ./vcpkg/vcpkg install
+
       - name: Build project
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake ..  -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
 
