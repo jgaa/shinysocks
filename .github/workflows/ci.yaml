@@ -12,15 +12,26 @@ jobs:
           - windows-latest
 #          - ubuntu-latest
 #          - macos-latest
-        compiler:
-          - gcc
-          - llvm
-          - clang
-          - msvc
+        compiler: [gcc, clang, msvc]
+          # - gcc
+          # - llvm
+          # - clang
+          # - msvc
           # you can specify the version after `-` like `llvm-13.0.0`.
         # include:
           # - os: "windows-latest"
           #   compiler: "msvc"
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+          - os: ubuntu-latest
+            compiler: clang
+          - os: windows-latest
+            compiler: msvc
+          - os: macos-latest
+            compiler: gcc
+          - os: macos-latest
+            compiler: clang
 
     steps:
       - name: Checkout code
@@ -57,7 +68,7 @@ jobs:
           ${{ github.workspace }}/vcpkg/vcpkg install
 
       - name: Prepate the PATH
-         run: echo "${{ github.workspace }}/ninja" >> $GITHUB_PATH
+        run: echo "${{ github.workspace }}/ninja" >> $GITHUB_PATH
 
       - name: Build project
         run: |
