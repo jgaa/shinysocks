@@ -13,7 +13,6 @@ jobs:
           - ubuntu-latest
 #          - macos-latest
         compiler:
-         # - llvm
           - gcc
           # you can specify the version after `-` like `llvm-13.0.0`.
         # include:
@@ -51,8 +50,8 @@ jobs:
           cppcheck: true
 
       - name: Install dependencies
-      run: |
-        ./vcpkg/vcpkg install
+        run: |
+          ./vcpkg/vcpkg install
 
       - name: Build project
         run: |
