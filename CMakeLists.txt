@@ -26,8 +26,8 @@ find_package(Boost ${USE_BOOST_VERSION} REQUIRED COMPONENTS
     system
     program_options
     serialization
-    context
     coroutine
+    context
     )
 
 add_executable(${PROJECT_NAME} Manager.cpp Listener.cpp Proxy.cpp main.cpp shinysocks.h logging.h)
@@ -52,3 +52,4 @@ target_link_libraries(${PROJECT_NAME}
 
 install(TARGETS shinysocks RUNTIME DESTINATION bin)
 
+message ("VCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}")
