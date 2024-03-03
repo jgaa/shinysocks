@@ -63,12 +63,20 @@ jobs:
           vcpkg: true
           cppcheck: true
 
+      - name: Prepate the PATH
+        run: |
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+                echo "$env:USERPROFILE\vcpkg" >> $GITHUB_PATH
+                echo "$env:USERPROFILE\ninja" >> $GITHUB_PATH
+            else
+                echo "$HOME/vcpkg" >> $GITHUB_PATH
+                echo "$HOME/ninja" >> $GITHUB_PATH
+            fi
+        shell: bash
+
       - name: Install dependencies
         run: |
-          ${{ env.HOME }}/vcpkg/vcpkg install
-
-      - name: Prepate the PATH
-        run: echo "${{ env.HOME }}/ninja" >> $GITHUB_PATH
+          vcpkg install
 
       - name: Build project
         run: |
