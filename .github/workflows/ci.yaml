@@ -14,12 +14,12 @@ jobs:
           - macos-latest
         compiler:
           - gcc
+          - llvm
+          - clang
           # you can specify the version after `-` like `llvm-13.0.0`.
         # include:
           - os: "windows-latest"
             compiler: "msvc"
-          - os: "macos-latest"
-            compiler: "llvm"
 
     steps:
       - name: Checkout code
