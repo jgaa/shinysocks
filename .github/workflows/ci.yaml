@@ -10,16 +10,17 @@ jobs:
         #os: [ubuntu-latest, windows-latest, macos-latest]
         os:
           - windows-latest
-          - ubuntu-latest
-          - macos-latest
+#          - ubuntu-latest
+#          - macos-latest
         compiler:
           - gcc
           - llvm
           - clang
+          - msvc
           # you can specify the version after `-` like `llvm-13.0.0`.
         # include:
-          - os: "windows-latest"
-            compiler: "msvc"
+          # - os: "windows-latest"
+          #   compiler: "msvc"
 
     steps:
       - name: Checkout code
