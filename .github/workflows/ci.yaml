@@ -51,7 +51,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ./vcpkg/vcpkg install
+          ~/vcpkg/vcpkg install
 
       - name: Build project
         run: |
