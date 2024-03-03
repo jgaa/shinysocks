@@ -8,11 +8,11 @@ jobs:
     strategy:
       matrix:
         #os: [ubuntu-latest, windows-latest, macos-latest]
-        os:
-          - windows-latest
-#          - ubuntu-latest
-#          - macos-latest
-        compiler: [gcc, clang, msvc]
+#         os:
+#           - windows-latest
+# #          - ubuntu-latest
+# #          - macos-latest
+#         compiler: [gcc, clang, msvc]
           # - gcc
           # - llvm
           # - clang
