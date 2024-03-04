@@ -31,7 +31,7 @@ simpler for you or other hackers to submit pull requests with new features ;)
 I'm also in the process of updating the code from mostly C++11 to C++20.
 
 The SOCKS server works for SOCKS 4, 4a and 5 under
-Linux Windows and MacOS.
+Linux, Windows and MacOS.
 
 IPv6 and binding (reverse connections) are not yet supported.
 
