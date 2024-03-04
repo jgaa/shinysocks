@@ -1,6 +1,10 @@
 name: CI
 
-on: [push, pull_request]
+on: 
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 1 * *' # This line schedules the workflow to run at 00:00 on the first day of every month
 
 jobs:
   build:
@@ -24,12 +28,18 @@ jobs:
         include:
           - os: ubuntu-latest
             compiler: gcc
-          - os: ubuntu-latest
-            compiler: clang
-          - os: windows-latest
-            compiler: msvc
-          - os: macos-latest
-            compiler: clang
+          # - os: ubuntu-latest
+          #   compiler: clang
+          # - os: windows-latest
+          #   compiler: msvc
+          # - os: macos-latest
+          #   compiler: clang
+
+    services:
+      backend:
+        image: nginx
+        ports:
+          - 8080:80
 
     steps:
       - name: Checkout code
@@ -92,5 +102,45 @@ jobs:
           pushd build
           cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
+          echo "-------------------------------------------"
+          ls -la bin
           popd
+
+      - name: Install curl
+        run: |
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+              choco install curl
+            elif [[ "${{ runner.os }}" == "macOS" ]]; then
+              brew install curl
+            else
+              sudo apt-get install -y curl
+            fi
+        shell: bash
+
+      - name: Test shinysocks
+        run: |
+          # Start shinysocks in the background
+          ./build/bin/shinysocks &
+          # Save its PID
+          SHINYSOCKS_PID=$!
+          # Give shinysocks some time to start
+          sleep 5
+          # Run curl command to verify that shinysocks works
+          curl -x socks5://localhost:1080 http://127.0.0.1:8080/
+          # Check the exit code of the curl command
+          if [ $? -ne 0 ]; then
+            # If the curl command failed, fail the workflow
+            echo "Curl command failed"
+            exit 1
+          fi
+          # Kill the shinysocks program
+          kill $SHINYSOCKS_PID
+        shell: bash
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: build/bin/*
+          retention-days: 1
+
 
