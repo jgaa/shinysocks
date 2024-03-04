@@ -4,7 +4,7 @@
 
 ## Mission Statement
 
-*To create a small, ultra-fast SOCKS proxy server that just works.
+*To create a small, ultra-fast SOCKS proxy server that just works.*
 
 ## Background
 
