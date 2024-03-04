@@ -84,11 +84,11 @@ jobs:
           pwd
           set
           echo "-------------------------------------------"
-          if [ -z build ]; then
-             mkdir build
+          if [ -d build ]; then
+            echo "Build dir exists"
+            ls -la build
           else
-             echo "Build dir exists"
-             ls -la build
+            mkdir build
              #rm -rf build/*
           fi
           pushd build
