@@ -229,8 +229,10 @@ void Proxy::ParseV5Header(const char *buffer,
     {
         const size_t remaining = len - header_len;
         hdr_buffer.reserve(1024);
-        hdr_buffer.resize(remaining);
-        memcpy(&hdr_buffer[0], buffer + header_len, remaining);
+        if (remaining) {
+            hdr_buffer.resize(remaining);
+            memcpy(&hdr_buffer[0], buffer + header_len, remaining);
+        }
     }
 
     bool need_more_data = hdr_buffer.size() < 7;

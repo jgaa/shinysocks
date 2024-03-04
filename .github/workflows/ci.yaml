@@ -1,0 +1,127 @@
+name: CI
+
+on: 
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 1 * *' # This line schedules the workflow to run at 00:00 on the first day of every month
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+          - os: ubuntu-latest
+            compiler: clang
+          - os: windows-latest
+            compiler: msvc
+          - os: macos-latest
+            compiler: clang
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/vcpkg
+            ./build/vcpkg_installed
+            ${{ env.HOME }}/.cache/vcpkg/archives
+            ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
+            ${{ env.LOCALAPPDATA }}\vcpkg\archives
+            ${{ env.APPDATA }}\vcpkg\archives
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./vcpkg.json')}}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: ${{ matrix.compiler }}
+          vcvarsall: ${{ contains(matrix.os, 'windows') }}
+          cmake: true
+          ninja: true
+          vcpkg: true
+          cppcheck: false
+
+      - name: Prepare the PATH
+        run: |
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+                echo "$env:USERPROFILE\vcpkg" >> $GITHUB_PATH
+                echo "$env:USERPROFILE\ninja" >> $GITHUB_PATH
+            else
+                echo "$HOME/vcpkg" >> $GITHUB_PATH
+                echo "$HOME/ninja" >> $GITHUB_PATH
+            fi
+        shell: bash
+
+      - name: Install dependencies
+        run: |
+          vcpkg install
+
+      - name: Build project
+        shell: bash
+        run: |
+          if [ -d build ]; then
+            echo "Build dir exists"
+            ls -la build
+          else
+            mkdir build
+             #rm -rf build/*
+          fi
+          pushd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake --build .
+          popd
+
+      - name: Install curl
+        run: |
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
+              choco install curl
+            elif [[ "${{ runner.os }}" == "macOS" ]]; then
+              brew install curl
+            else
+              sudo apt-get install -y curl
+            fi
+        shell: bash
+
+      - name: Test shinysocks
+        run: |
+          # Start shinysocks in the background
+          ./build/bin/shinysocks -c "" -l debug &
+          # Save its PID
+          SHINYSOCKS_PID=$!
+          # Give shinysocks some time to start
+          sleep 5
+          # Run curl command to verify that shinysocks works
+          curl -L --socks5-hostname socks5://localhost:1080 https://raw.githubusercontent.com/jgaa/shinysocks/master/ci/test.txt
+          # Check the exit code of the curl command
+          if [ $? -ne 0 ]; then
+            # If the curl command failed, fail the workflow
+            echo "Curl command failed"
+            exit 1
+          fi
+          # Kill the shinysocks program
+          kill $SHINYSOCKS_PID
+        shell: bash
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p artifacts
+          cp build/bin/* artifacts/
+          cp shinysocks.conf artifacts/
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: shinysocks-${{ matrix.os }}-${{ matrix.compiler }}
+          path: artifacts/*
+          retention-days: 1
+

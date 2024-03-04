@@ -1,8 +1,9 @@
+
+#include <filesystem>
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/program_options.hpp>
 #include <boost/property_tree/info_parser.hpp>
-#include <boost/filesystem.hpp>
 
 #include "shinysocks.h"
 #include "logging.h"
@@ -42,6 +43,10 @@ int main(int argc, char **argv) {
     {
         std::string log_level = "info";
         std::string conf_file = "shinysocks.conf";
+
+        if (!std::filesystem::exists(conf_file)) {
+            conf_file = "";
+        }
 
         po::options_description general("General Options");
 
@@ -89,13 +94,29 @@ int main(int argc, char **argv) {
             return -1;
         }
 
-        if (!boost::filesystem::exists(conf_file)) {
+        if (conf_file.empty()) {
+            string config = R"(interfaces {
+                interface {
+                    hostname "0.0.0.0"
+                    port 1080
+                }
+            }
+            system {
+                ; Number of io-threads
+                io-threads 2
+            })";
+            istringstream is(config);
+            boost::property_tree::read_info(is, opts);
+        } else {
+            if (!std::filesystem::exists(conf_file)) {
             cerr << "*** The configuration-file '"
                 << conf_file
                 << "' does not exist.";
             return -1;
+            }
+
+            read_info(conf_file, opts);
         }
-        read_info(conf_file, opts);
 
         if (auto log_file = opts.get_optional<string>("log.file")) {
             cout << "Opening log-file: " << *log_file << endl;
@@ -134,7 +155,7 @@ int main(int argc, char **argv) {
             for(; address_it != addr_end; ++address_it) {
                 auto iface = make_unique<Listener>(manager, *address_it);
                 iface->StartAccepting();
-                listeners.push_back(move(iface));
+                listeners.push_back(std::move(iface));
             }
         }
     }
@@ -146,8 +167,6 @@ int main(int argc, char **argv) {
     }
 #endif
 
-
-    // Wait for signal
     SleepUntilDoomdsay();
 
     manager.Shutdown();

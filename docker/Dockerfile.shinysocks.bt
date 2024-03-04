@@ -1,0 +1,30 @@
+FROM debian:bookworm
+LABEL maintainer="jgaa@jgaa.com"
+
+ENV USER_UID=999 USER_NAME=shinysocks
+
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -q update &&\
+    DEBIAN_FRONTEND="noninteractive" apt-get -y -q --no-install-recommends upgrade &&\
+    DEBIAN_FRONTEND="noninteractive" apt-get install -y -q --no-install-recommends \
+        libboost-system1.81.0 libboost-program-options1.81.0 \
+        libboost-coroutine1.81.0 libboost-context1.81.0 gdb
+
+COPY bin/* /usr/local/bin/
+COPY logbt.sh /usr/local/bin/logbt
+COPY startup.sh /usr/local/bin/startup.sh
+
+RUN groupadd -r -g ${USER_UID} ${USER_NAME} \
+    && mkdir -m=755 -p /var/home/ \
+    && useradd -r -m -k /dev/null -u ${USER_UID} -g ${USER_UID} -c "Shinysocks user" \
+    -d /var/home/${USER_NAME}/ -s /bin/false ${USER_NAME} \
+    && mkdir -m=755 -p /etc/shinysocks \
+    && chmod +x /usr/local/bin/logbt \
+    && chmod +x /usr/local/bin/startup.sh 
+
+COPY shinysocks.conf /etc/shinysocks/
+
+RUN ldconfig
+
+USER ${USER_NAME}
+
+ENTRYPOINT startup.sh -c /etc/shinysocks/shinysocks.conf

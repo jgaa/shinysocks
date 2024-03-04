@@ -1,15 +1,18 @@
 # ShinySOCKS
 
+[![CI](https://github.com/jgaa/shinysocks/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/jgaa/shinysocks/actions/workflows/ci.yaml)
+
 ## Mission Statement
 
-*To create a small, ultrafast SOCKS proxy server.
+*To create a small, ultra-fast SOCKS proxy server that just works.
 
 ## Background
 
-I sometimes use VPN. In one case, I have a VPN access only
+I sometimes use VPN. In one case, I had VPN access only
 from a Windows 7 virtual machine trough some proprietary
-"security by obscurity" VPN software. In order to work
-efficiently, I need to connect my Linux workstation to that
+"security by obscurity", obscenely expensive enterprise
+VPN software. In order to work
+efficiently, I needed to connect my Linux workstation to that
 VPN. Network routing and IP forwarding seems not to work,
 so the second best option in my case is SOCKS. Socks
 trough Putty works, kind of. It's slow and unreliable.
@@ -21,12 +24,16 @@ therefore I'm spending a few hours writing my own.
 - [My blog](https://lastviking.eu/_tags/shinysocks.html)
 
 ## Current State
-The project is currently in maintainance mode. It just works.
+The project has been in maintenance mode for ages. It just works.
+However, these days I'm fixing some build issues to make it 
+simpler for you or other hackers to submit pull requests with new features ;)
+
+I'm also in the process of updating the code from mostly C++11 to C++20.
 
 The SOCKS server works for SOCKS 4, 4a and 5 under
-Linux and Windows (compiled under Windows 7 with Visual
-Studio 2015 RC and Boost 1.58). IPv6 and binding (reverse
-connections) are not yet supported.
+Linux Windows and MacOS.
+
+IPv6 and binding (reverse connections) are not yet supported.
 
 ## How I use it
 
@@ -38,10 +45,18 @@ From Linux:
  $ ssh -o ProxyCommand='nc -x 192.168.0.10:1080 %h %p' jgaa@cool-server
 
 For accessing intranet web pages over the VPN, I some times
-use the [Foxy Proxy](https://getfoxyproxy.org/) Firefox plugin.
+used the [Foxy Proxy](https://getfoxyproxy.org/) Firefox plugin.
 It simplifies things, and make my work-flow smooth. This also
-improves my privacy, as the VPN host will only see the web traffic
+improved my privacy, as the VPN host will only see the web traffic
 going to the intranet sites.
+
+## How I test it
+
+If it run locally, and I have curl installed, I can test it like this:
+```sh
+curl -L --socks5-hostname socks5://localhost:1080 https://raw.githubusercontent.com/jgaa/shinysocks/master/ci/test.txt
+
+```
 
 ## Docker
 
@@ -57,8 +72,20 @@ To run it.
 docker run --rm --name shiny -p 1080:1080 -d jgaafromnorth/shinysocks
 ```
 
-You can now set the socks 5 address to ip `172.17.0.1` port `1080` in your applications (for example Firefox') proxy settings and test it.
+To  test it on the command-line with `curl`:
+```sh
+# Let curl do the DNS lookup
+curl -L -x socks5://localhost:1080 https://www.google.com/
+
+# Let shinysocks do the DNS lookup
+
+curl -L --socks5-hostname socks5://localhost:1080 https://www.google.com/
+```
+
+You can now set the socks 5 address to ip `127.0.0.1` port `1080` in your applications (for example Firefox') proxy settings and test it.
 
 ## License
 ShinySOCKS is released under GPLv3.
-It is Free. Free as in speech. Free as in Free Air.
+
+It is Free. Free as in free speech - at least in imaginary countries, where free speech is still allowed ;)
+
