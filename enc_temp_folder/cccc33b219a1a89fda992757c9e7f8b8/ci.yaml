@@ -126,7 +126,7 @@ jobs:
           # Give shinysocks some time to start
           sleep 5
           # Run curl command to verify that shinysocks works
-          curl -L --socks5-hostname socks5://localhost:1080 https://raw.githubusercontent.com/jgaa/shinysocks/master/ci/test.txt
+          curl -L --socks5-hostname -x socks5://localhost:1080 https://raw.githubusercontent.com/jgaa/shinysocks/master/ci/test.txt
           # Check the exit code of the curl command
           if [ $? -ne 0 ]; then
             # If the curl command failed, fail the workflow
