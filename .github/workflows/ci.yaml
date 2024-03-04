@@ -2,12 +2,11 @@ name: CI
 
 on: [push, pull_request]
 
-env:
-    TOOLS_ROOT: ${{ env.HOME }}
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    env:
+        TOOLS_ROOT: ${{ env.HOME }}
     strategy:
       matrix:
         #os: [ubuntu-latest, windows-latest, macos-latest]
