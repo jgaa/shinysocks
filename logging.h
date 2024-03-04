@@ -5,7 +5,7 @@ namespace nextapp::logging {
 } // ns
 
 
-#if !defined(WIN32) && __has_include(<sys/syscall.h>)
+#if !defined(WIN32) && !defined(__APPLE__) && __has_include(<sys/syscall.h>)
 #	define LOGFAULT_USE_TID_AS_NAME 1
 #endif
 

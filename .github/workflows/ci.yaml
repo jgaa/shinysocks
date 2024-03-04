@@ -28,8 +28,8 @@ jobs:
           #   compiler: clang
           # - os: windows-latest
           #   compiler: msvc
-          - os: macos-latest
-            compiler: gcc
+          # - os: macos-latest
+          #   compiler: gcc
           - os: macos-latest
             compiler: clang
 
