@@ -35,11 +35,11 @@ jobs:
           - os: macos-latest
             compiler: clang
 
-    services:
-      backend:
-        image: nginx
-        ports:
-          - 8080:80
+    # services:
+    #   backend:
+    #     image: nginx
+    #     ports:
+    #       - 8080:80
 
     steps:
       - name: Checkout code
@@ -126,7 +126,7 @@ jobs:
           # Give shinysocks some time to start
           sleep 5
           # Run curl command to verify that shinysocks works
-          curl -x socks5://localhost:1080 http://127.0.0.1:8080/
+          curl -x socks5://localhost:1080 https://github.com/jgaa/shinysocks/blob/master/ci/test.txt
           # Check the exit code of the curl command
           if [ $? -ne 0 ]; then
             # If the curl command failed, fail the workflow
