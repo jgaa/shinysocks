@@ -11,20 +11,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #os: [ubuntu-latest, windows-latest, macos-latest]
-#         os:
-#           - windows-latest
-# #          - ubuntu-latest
-# #          - macos-latest
-#         compiler: [gcc, clang, msvc]
-          # - gcc
-          # - llvm
-          # - clang
-          # - msvc
-          # you can specify the version after `-` like `llvm-13.0.0`.
-        # include:
-          # - os: "windows-latest"
-          #   compiler: "msvc"
         include:
           - os: ubuntu-latest
             compiler: gcc
@@ -34,12 +20,6 @@ jobs:
             compiler: msvc
           - os: macos-latest
             compiler: clang
-
-    # services:
-    #   backend:
-    #     image: nginx
-    #     ports:
-    #       - 8080:80
 
     steps:
       - name: Checkout code
@@ -89,9 +69,6 @@ jobs:
       - name: Build project
         shell: bash
         run: |
-          pwd
-          set
-          echo "-------------------------------------------"
           if [ -d build ]; then
             echo "Build dir exists"
             ls -la build
@@ -100,10 +77,8 @@ jobs:
              #rm -rf build/*
           fi
           pushd build
-          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
-          echo "-------------------------------------------"
-          ls -la bin
           popd
 
       - name: Install curl
