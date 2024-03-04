@@ -120,7 +120,7 @@ jobs:
       - name: Test shinysocks
         run: |
           # Start shinysocks in the background
-          ./build/bin/shinysocks &
+          ./build/bin/shinysocks -c "" -l debug &
           # Save its PID
           SHINYSOCKS_PID=$!
           # Give shinysocks some time to start
@@ -140,7 +140,10 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: build/bin/*
+          path: |
+            build/bin/*
+            shinysocks.conf
+
           retention-days: 1
 
 
