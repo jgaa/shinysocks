@@ -28,12 +28,12 @@ jobs:
         include:
           - os: ubuntu-latest
             compiler: gcc
-          # - os: ubuntu-latest
-          #   compiler: clang
-          # - os: windows-latest
-          #   compiler: msvc
-          # - os: macos-latest
-          #   compiler: clang
+          - os: ubuntu-latest
+            compiler: clang
+          - os: windows-latest
+            compiler: msvc
+          - os: macos-latest
+            compiler: clang
 
     services:
       backend:
@@ -137,13 +137,16 @@ jobs:
           kill $SHINYSOCKS_PID
         shell: bash
 
+      - name: Prepare artifacts
+        run: |
+          mkdir -p artifacts
+          cp build/bin/* artifacts/
+          cp shinysocks.conf artifacts/
+
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: |
-            build/bin/*
-            shinysocks.conf
-
+          name: shinysocks-${{ matrix.os }}-${{ matrix.compiler }}
+          path: artifacts/*
           retention-days: 1
-
 
