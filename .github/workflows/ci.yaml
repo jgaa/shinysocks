@@ -2,9 +2,6 @@ name: CI
 
 on: [push, pull_request]
 
-env:
-    TOOLS_ROOT: ""
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -71,11 +68,9 @@ jobs:
             if [[ "${{ runner.os }}" == "Windows" ]]; then
                 echo "$env:USERPROFILE\vcpkg" >> $GITHUB_PATH
                 echo "$env:USERPROFILE\ninja" >> $GITHUB_PATH
-                echo "$env:USERPROFILE" > $TOOLS_ROOT
             else
                 echo "$HOME/vcpkg" >> $GITHUB_PATH
                 echo "$HOME/ninja" >> $GITHUB_PATH
-                echo "$HOME" >> $TOOLS_ROOT
             fi
         shell: bash
 
@@ -86,8 +81,12 @@ jobs:
       - name: Build project
         shell: bash
         run: |
+          set
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            HOME=$env:USERPROFILE
+          fi
           mkdir build
           cd build
-          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=$TOOLS_ROOT/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
 
