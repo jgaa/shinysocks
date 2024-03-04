@@ -81,9 +81,16 @@ jobs:
       - name: Build project
         shell: bash
         run: |
+          pwd
           set
           echo "-------------------------------------------"
-          mkdir build
+          if [ -z build ]; then
+             mkdir build
+          else
+             echo "Build dir exists"
+             ls -la build
+             #rm -rf build/*
+          fi
           pushd build
           cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
