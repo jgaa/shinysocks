@@ -1,6 +1,6 @@
 # ShinySOCKS
 
-![CI](https://github.com/jgaa/shinysocks/actions/workflows/ci.yml/badge.svg?branch=fix-cmake)
+[![CI](https://github.com/jgaa/shinysocks/actions/workflows/ci.yaml/badge.svg?branch=fix-cmake)](https://github.com/jgaa/shinysocks/actions/workflows/ci.yaml)
 
 ## Mission Statement
 

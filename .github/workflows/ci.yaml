@@ -22,10 +22,10 @@ jobs:
           # - os: "windows-latest"
           #   compiler: "msvc"
         include:
-          # - os: ubuntu-latest
-          #   compiler: gcc
-          # - os: ubuntu-latest
-          #   compiler: clang
+          - os: ubuntu-latest
+            compiler: gcc
+          - os: ubuntu-latest
+            compiler: clang
           - os: windows-latest
             compiler: msvc
           # - os: macos-latest
@@ -85,7 +85,7 @@ jobs:
           echo "-------------------------------------------"
           mkdir build
           pushd build
-          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
           popd
 
