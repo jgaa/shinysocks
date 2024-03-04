@@ -61,9 +61,9 @@ jobs:
           cmake: true
           ninja: true
           vcpkg: true
-          cppcheck: true
+          cppcheck: false
 
-      - name: Prepate the PATH
+      - name: Prepare the PATH
         run: |
             if [[ "${{ runner.os }}" == "Windows" ]]; then
                 echo "$env:USERPROFILE\vcpkg" >> $GITHUB_PATH
@@ -82,11 +82,10 @@ jobs:
         shell: bash
         run: |
           set
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            HOME=$env:USERPROFILE
-          fi
+          echo "-------------------------------------------"
           mkdir build
-          cd build
+          pushd build
           cmake .. -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=$HOME/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
+          popd
 
