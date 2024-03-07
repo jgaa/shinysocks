@@ -28,7 +28,8 @@ The project has been in maintenance mode for ages. It just works.
 However, these days I'm fixing some build issues to make it 
 simpler for you or other hackers to submit pull requests with new features ;)
 
-I'm also in the process of updating the code from mostly C++11 to C++20.
+I'm also in the process of updating the code from mostly C++11 to C++20. But
+it's not a very high priority - after all, the application work well as it is.
 
 The SOCKS server works for SOCKS 4, 4a and 5 under
 Linux, Windows and MacOS.
@@ -83,6 +84,11 @@ curl -L --socks5-hostname socks5://localhost:1080 https://www.google.com/
 ```
 
 You can now set the socks 5 address to ip `127.0.0.1` port `1080` in your applications (for example Firefox') proxy settings and test it.
+
+## Supported platforms
+- Linux
+- Windows
+- MacOS
 
 ## License
 ShinySOCKS is released under GPLv3.
