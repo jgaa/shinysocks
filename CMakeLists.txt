@@ -8,7 +8,7 @@ endif()
 project(shinysocks
     DESCRIPTION "Socks Proxy server"
     HOMEPAGE_URL https://github.com/jgaa/shinysocks
-    VERSION 1.3.2
+    VERSION 1.3.3
     LANGUAGES CXX
 )
 
@@ -52,4 +52,3 @@ target_link_libraries(${PROJECT_NAME}
 
 install(TARGETS shinysocks RUNTIME DESTINATION bin)
 
-message ("VCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}")
