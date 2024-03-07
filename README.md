@@ -85,6 +85,40 @@ curl -L --socks5-hostname socks5://localhost:1080 https://www.google.com/
 
 You can now set the socks 5 address to ip `127.0.0.1` port `1080` in your applications (for example Firefox') proxy settings and test it.
 
+## Command line
+
+You can download a zipfile with the binary and run in from the command line:
+
+**Linux**
+
+After you have extracted the zip archive:
+
+```sh
+chmod +x shinysocks
+
+./shinysocks -l debug -c ""
+
+```
+
+**Windows**
+
+```sh
+
+shinysocks -l debug -c ""
+
+```
+
+**MacOS**
+
+```sh
+
+chmod +x shinysocks
+
+./shinysocks -l debug -c ""
+
+```
+
+
 ## Supported platforms
 - Linux
 - Windows
