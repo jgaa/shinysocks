@@ -46,7 +46,6 @@ set_target_properties(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         ${Boost_LIBRARIES}
-        $<BUILD_INTERFACE:${stdc++fs}>
         $<BUILD_INTERFACE:Threads::Threads>
     )
 
