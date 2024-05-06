@@ -19,7 +19,7 @@ jobs:
           # - os: windows-latest
           #   compiler: msvc
           - os: macos-latest
-            compiler: llvm
+            compiler:
 
     steps:
       - name: Checkout code
@@ -50,6 +50,11 @@ jobs:
           ninja: true
           vcpkg: true
           cppcheck: false
+
+      - name: Install compiler for Macos
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install llvm
 
       - name: Prepare the PATH
         run: |
