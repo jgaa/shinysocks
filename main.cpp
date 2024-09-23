@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     vector<unique_ptr<Listener>> listeners;
 
     {
-        std::string log_level = "info";
+        std::string log_level;
         std::string conf_file = "shinysocks.conf";
 
         if (!std::filesystem::exists(conf_file)) {
@@ -60,8 +60,8 @@ int main(int argc, char **argv) {
             ("daemon",  po::value<bool>(&run_as_daemon), "Run as a system daemon")
 #endif
             ("log-level,l",
-                 po::value<string>(&log_level)->default_value(log_level),
-                 "Log-level to use; one of 'info', 'debug', 'trace'")
+                 po::value<string>(&log_level),
+                 "Log-level to use; one of 'info', 'debug', 'trace', 'none'. Default is 'info'")
             ;
 
         po::options_description cmdline_options;
@@ -79,18 +79,6 @@ int main(int argc, char **argv) {
 
         if (vm.count("version")) {
             cout << GetProgramName() << ' ' << GetProgramVersion() << endl;
-            return -1;
-        }
-
-        auto llevel = logfault::LogLevel::INFO;
-        if (log_level == "debug") {
-            llevel = logfault::LogLevel::DEBUGGING;
-        } else if (log_level == "trace") {
-            llevel = logfault::LogLevel::TRACE;
-        } else if (log_level == "info") {
-            ;  // Do nothing
-        } else {
-            std::cerr << "Unknown log-level: " << log_level << endl;
             return -1;
         }
 
@@ -118,13 +106,35 @@ int main(int argc, char **argv) {
             read_info(conf_file, opts);
         }
 
-        if (auto log_file = opts.get_optional<string>("log.file")) {
-            cout << "Opening log-file: " << *log_file << endl;
-            logfault::LogManager::Instance().AddHandler(
-                        make_unique<logfault::StreamHandler>(*log_file, llevel));
+        if (log_level.empty()) {
+            if (auto flevel = opts.get_optional<string>("log.level")) {
+                log_level = *flevel;
+            }
+        }
+
+        auto llevel = logfault::LogLevel::INFO;
+        if (log_level == "debug") {
+            llevel = logfault::LogLevel::DEBUGGING;
+        } else if (log_level == "trace") {
+            llevel = logfault::LogLevel::TRACE;
+        } else if (log_level.empty() || log_level == "info") {
+            ;  // Do nothing
+        } else if (log_level == "none") {
+            llevel = LOG_NONE;
         } else {
-            logfault::LogManager::Instance().AddHandler(
-                        make_unique<logfault::StreamHandler>(clog, llevel));
+            std::cerr << "Unknown log-level: " << log_level << endl;
+            return -1;
+        }
+
+        if (llevel != LOG_NONE) {
+            if (auto log_file = opts.get_optional<string>("log.file")) {
+                cout << "Opening log-file: " << *log_file << endl;
+                logfault::LogManager::Instance().AddHandler(
+                            make_unique<logfault::StreamHandler>(*log_file, llevel));
+            } else {
+                logfault::LogManager::Instance().AddHandler(
+                            make_unique<logfault::StreamHandler>(clog, llevel));
+            }
         }
 
         LOG_INFO << GetProgramName() << ' ' << GetProgramVersion()

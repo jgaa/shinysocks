@@ -118,6 +118,7 @@ chmod +x shinysocks
 
 ```
 
+To **disable logging**, set the log level to `none`.
 
 ## Supported platforms
 - Linux
