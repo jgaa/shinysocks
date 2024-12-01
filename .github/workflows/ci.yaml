@@ -107,6 +107,8 @@ jobs:
 
       - name: Build project
         shell: bash
+        env:
+          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
         run: |
           if [ -d build ]; then
             echo "Build dir exists"
