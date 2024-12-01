@@ -75,6 +75,7 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install llvm
+          brew install ninja
 
       - name: Install Rosetta (for x64 compatibility)
         if: runner.os == 'macOS' && matrix.arch == 'arm64'
@@ -110,9 +111,9 @@ jobs:
         env:
           VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
         run: |
-          export PATH=${PATH}:~/ninja:/vcpkg
           echo "VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}"
           echo "PATH: ${PATH}"
+          ls -la ~/ninja
           if [ -d build ]; then
             echo "Build dir exists"
             ls -la build
