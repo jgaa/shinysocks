@@ -12,14 +12,29 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            compiler: gcc
-          - os: ubuntu-latest
-            compiler: clang
-          - os: windows-latest
-            compiler: msvc
-          - os: macos-latest
-            compiler:
+          # - os: ubuntu-latest
+          #   compiler: gcc
+          # - os: ubuntu-latest
+          #   compiler: clang
+          # - os: windows-latest
+          #   compiler: msvc
+          # - os: macos-latest
+          #   compiler:
+            - os: ubuntu-latest
+              compiler: gcc
+              arch: x64
+            - os: ubuntu-latest
+              compiler: clang
+              arch: x64
+            - os: windows-latest
+              compiler: msvc
+              arch: x64
+            - os: macos-latest
+              compiler: clang
+              arch: x64
+            - os: macos-latest
+              compiler: clang
+              arch: arm64
 
     steps:
       - name: Checkout code
@@ -37,7 +52,7 @@ jobs:
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
             ${{ env.LOCALAPPDATA }}\vcpkg\archives
             ${{ env.APPDATA }}\vcpkg\archives
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./vcpkg.json')}}
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ matrix.arch }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./vcpkg.json')}}
           restore-keys: |
             ${{ runner.os }}-${{ env.BUILD_TYPE }}-
 
@@ -82,7 +97,7 @@ jobs:
              #rm -rf build/*
           fi
           pushd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
           popd
 
@@ -126,7 +141,7 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shinysocks-${{ matrix.os }}-${{ matrix.compiler }}
+          name: shinysocks-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.arch }}
           path: artifacts/*
           retention-days: 1
 
