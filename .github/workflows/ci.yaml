@@ -23,18 +23,23 @@ jobs:
             - os: ubuntu-latest
               compiler: gcc
               arch: x64
+              triplet: x64-linux
             - os: ubuntu-latest
               compiler: clang
               arch: x64
+              triplet: x64-linux
             - os: windows-latest
               compiler: msvc
               arch: x64
+              triplet: x64-windows
             - os: macos-latest
               compiler: clang
               arch: x64
+              triplet: x64-osx
             - os: macos-latest
               compiler: clang
               arch: arm64
+              triplet: arm64-osx
 
     steps:
       - name: Checkout code
@@ -46,7 +51,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/vcpkg
+            ~/vcpkg install --triplet ${{ matrix.triplet }}
             ./build/vcpkg_installed
             ${{ env.HOME }}/.cache/vcpkg/archives
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
@@ -54,7 +59,7 @@ jobs:
             ${{ env.APPDATA }}\vcpkg\archives
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ matrix.arch }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./vcpkg.json')}}
           restore-keys: |
-            ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+            ${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ matrix.arch }}-
 
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
@@ -97,7 +102,10 @@ jobs:
              #rm -rf build/*
           fi
           pushd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} \
+            -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
           cmake --build .
           popd
 
