@@ -110,6 +110,9 @@ jobs:
         env:
           VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
         run: |
+          export PATH=${PATH}:~/ninja:/vcpkg
+          echo "VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}"
+          echo "PATH: ${PATH}"
           if [ -d build ]; then
             echo "Build dir exists"
             ls -la build
