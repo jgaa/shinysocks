@@ -51,7 +51,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/vcpkg install --triplet ${{ matrix.triplet }}
+            ~/vcpkg
             ./build/vcpkg_installed
             ${{ env.HOME }}/.cache/vcpkg/archives
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
@@ -94,7 +94,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          vcpkg install
+          vcpkg install --triplet ${{ matrix.triplet }}
+        continue-on-error: true
+
+      - name: Upload vcpkg log on failure
+        if: failure() && steps.install_dependencies.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+            name: boost-system-install-log-${{ matrix.os }}-${{ matrix.arch }}
+            path: /Users/runner/vcpkg/buildtrees/boost-system/install-arm64-osx-dbg-out.log
+            retention-days: 7
 
       - name: Build project
         shell: bash
