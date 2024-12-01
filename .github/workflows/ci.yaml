@@ -76,6 +76,11 @@ jobs:
         run: |
           brew install llvm
 
+      - name: Install Rosetta (for x64 compatibility)
+        if: runner.os == 'macOS' && matrix.arch == 'arm64'
+        run: |
+            softwareupdate --install-rosetta --agree-to-license || true
+
       - name: Prepare the PATH
         run: |
             if [[ "${{ runner.os }}" == "Windows" ]]; then
