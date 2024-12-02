@@ -12,30 +12,22 @@ jobs:
     strategy:
       matrix:
         include:
-          # - os: ubuntu-latest
-          #   compiler: gcc
-          # - os: ubuntu-latest
-          #   compiler: clang
-          # - os: windows-latest
-          #   compiler: msvc
-          # - os: macos-latest
-          #   compiler:
-            - os: ubuntu-latest
-              compiler: gcc
-              arch: x64
-              triplet: x64-linux
-            - os: ubuntu-latest
-              compiler: clang
-              arch: x64
-              triplet: x64-linux
-            - os: windows-latest
-              compiler: msvc
-              arch: x64
-              triplet: x64-windows
-            - os: macos-latest
-              compiler: clang
-              arch: x64
-              triplet: x64-osx
+            # - os: ubuntu-latest
+            #   compiler: gcc
+            #   arch: x64
+            #   triplet: x64-linux
+            # - os: ubuntu-latest
+            #   compiler: clang
+            #   arch: x64
+            #   triplet: x64-linux
+            # - os: windows-latest
+            #   compiler: msvc
+            #   arch: x64
+            #   triplet: x64-windows
+            # - os: macos-latest
+            #   compiler: clang
+            #   arch: x64
+            #   triplet: x64-osx
             - os: macos-latest
               compiler: clang
               arch: arm64
@@ -131,6 +123,7 @@ jobs:
         continue-on-error: true
 
       - name: Dump vcpkg log on failure
+        if: failure()
         run: |
             echo "---------------------------------"
             cat /Users/runner/vcpkg/buildtrees/boost-system/install-${{ matrix.arch }}-dbg-out.log
