@@ -130,13 +130,12 @@ jobs:
           popd
         continue-on-error: true
 
-      - name: Upload vcpkg log on failure
-        if: failure() && steps.install_dependencies.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-            name: boost-system-install-log-${{ matrix.os }}-${{ matrix.arch }}
-            path: /Users/runner/vcpkg/buildtrees/boost-system/install-${{ matrix.arch }}-dbg-out.log
-            retention-days: 3
+      - name: Dump vcpkg log on failure
+        run: |
+            echo "---------------------------------"
+            cat /Users/runner/vcpkg/buildtrees/boost-system/install-${{ matrix.arch }}-dbg-out.log
+            echo
+            echo "---------------------------------"
 
       - name: Install curl
         run: |
