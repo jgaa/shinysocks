@@ -123,7 +123,6 @@ jobs:
         continue-on-error: true
 
       - name: Dump vcpkg log on failure
-        if: failure()
         run: |
             echo "---------------------------------"
             cat /Users/runner/vcpkg/buildtrees/boost-system/install-${{ matrix.arch }}-dbg-out.log
