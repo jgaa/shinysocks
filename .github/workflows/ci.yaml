@@ -1,6 +1,6 @@
 name: CI
 
-on: 
+on:
   push:
   pull_request:
   schedule:
@@ -12,26 +12,14 @@ jobs:
     strategy:
       matrix:
         include:
-            # - os: ubuntu-latest
-            #   compiler: gcc
-            #   arch: x64
-            #   triplet: x64-linux
-            # - os: ubuntu-latest
-            #   compiler: clang
-            #   arch: x64
-            #   triplet: x64-linux
-            # - os: windows-latest
-            #   compiler: msvc
-            #   arch: x64
-            #   triplet: x64-windows
-            # - os: macos-latest
-            #   compiler: clang
-            #   arch: x64
-            #   triplet: x64-osx
-            - os: macos-latest
-              compiler: clang
-              arch: arm64
-              triplet: arm64-osx
+          - os: ubuntu-latest
+            compiler: gcc
+          - os: ubuntu-latest
+            compiler: clang
+          - os: windows-latest
+            compiler: msvc
+          - os: macos-latest
+            compiler:
 
     steps:
       - name: Checkout code
@@ -49,9 +37,9 @@ jobs:
             ${{ env.XDG_CACHE_HOME }}/vcpkg/archives
             ${{ env.LOCALAPPDATA }}\vcpkg\archives
             ${{ env.APPDATA }}\vcpkg\archives
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ matrix.arch }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./vcpkg.json')}}
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./vcpkg.json')}}
           restore-keys: |
-            ${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ matrix.arch }}-
+            ${{ runner.os }}-${{ env.BUILD_TYPE }}-
 
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
@@ -67,12 +55,6 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           brew install llvm
-          brew install ninja
-
-      - name: Install Rosetta (for x64 compatibility)
-        if: runner.os == 'macOS' && matrix.arch == 'arm64'
-        run: |
-            softwareupdate --install-rosetta --agree-to-license || true
 
       - name: Prepare the PATH
         run: |
@@ -87,25 +69,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          vcpkg install --triplet ${{ matrix.triplet }}
-        continue-on-error: true
-
-      - name: Upload vcpkg log on failure
-        if: failure() && steps.install_dependencies.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-            name: boost-system-install-log-${{ matrix.os }}-${{ matrix.arch }}
-            path: /Users/runner/vcpkg/buildtrees/boost-system/install-${{ matrix.arch }}-dbg-out.log
-            retention-days: 3
+          vcpkg install
 
       - name: Build project
         shell: bash
-        env:
-          VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
         run: |
-          echo "VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}"
-          echo "PATH: ${PATH}"
-          ls -la ~/ninja
           if [ -d build ]; then
             echo "Build dir exists"
             ls -la build
@@ -114,21 +82,9 @@ jobs:
              #rm -rf build/*
           fi
           pushd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} \
-            -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
           cmake --build .
           popd
-        continue-on-error: true
-
-      - name: Dump vcpkg log on failure
-        run: |
-            echo "---------------------------------"
-            cat /Users/runner/vcpkg/buildtrees/boost-system/install-arm64-osx-dbg-out.log
-            echo "---------------------------------"
-            cat /Users/runner/work/shinysocks/shinysocks/build/vcpkg-manifest-install.log
-            echo "---------------------------------"
 
       - name: Install curl
         run: |
@@ -170,7 +126,7 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shinysocks-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.arch }}
+          name: shinysocks-${{ matrix.os }}-${{ matrix.compiler }}
           path: artifacts/*
           retention-days: 1
 
