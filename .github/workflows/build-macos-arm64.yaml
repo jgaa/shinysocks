@@ -1,0 +1,50 @@
+name: Build macOS arm64 Project
+
+on:
+  push:
+    branches:
+      - automation
+  pull_request:
+
+jobs:
+  build-macos-arm64:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Dependencies
+        run: |
+          # Install essential tools
+          brew update
+          brew install cmake ninja llvm boost
+
+      - name: Configure Build
+        run: |
+          mkdir -p build
+          pushd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
+                   -DCMAKE_OSX_ARCHITECTURES=arm64 \
+                   -DBOOST_ROOT=$(brew --prefix boost)
+          popd
+
+      - name: Build Project
+        run: |
+          pushd build
+          cmake --build .
+          popd
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p artifacts
+          cp build/bin/* artifacts/
+
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-build
+          path: artifacts/*
+          retention-days: 1
