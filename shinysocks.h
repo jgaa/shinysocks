@@ -9,9 +9,9 @@
 #include <memory>
 
 #if (BOOST_VERSION >= 106900)
-#   define GET_IO_SERVICE_OR_EXECURTOR() get_executor()
+#   define GET_IO_CONTEXT_OR_EXECURTOR() get_executor()
 #else
-#   define GET_IO_SERVICE_OR_EXECURTOR() get_io_service()
+#   define GET_IO_CONTEXT_OR_EXECURTOR() get_io_context()
 #endif
 
 namespace shinysocks {
@@ -40,18 +40,18 @@ class Manager
         void Start();
 
         void Stop() {
-            if (!io_service_.stopped()) {
-                io_service_.stop();
+            if (!io_context_.stopped()) {
+                io_context_.stop();
             }
         }
 
-        boost::asio::io_service& GetIoService() { return io_service_; }
+        boost::asio::io_context & GetIoService() { return io_context_; }
         std::thread& GetThread() { return *thread_; }
 
     private:
         void Run();
         std::unique_ptr<std::thread> thread_;
-        boost::asio::io_service io_service_;
+        boost::asio::io_context io_context_;
     };
 
 public:
@@ -61,8 +61,8 @@ public:
 
     Manager(Conf& conf);
 
-    boost::asio::io_service& GetSomeIoService() {
-        return threads_[++next_io_service_ % threads_.size()]->GetIoService();
+    boost::asio::io_context& GetSomeIoService() {
+        return threads_[++next_io_context_ % threads_.size()]->GetIoService();
         //return threads_[0]->GetIoService();
     }
 
@@ -77,7 +77,7 @@ public:
 private:
 
     std::vector<std::unique_ptr<Thread>> threads_;
-    std::atomic_int next_io_service_;
+    std::atomic_int next_io_context_;
 };
 
 
@@ -91,7 +91,7 @@ public:
     void StartAccepting();
 
 private:
-    void StartAcceptingInt(boost::asio::io_service& ios,
+    void StartAcceptingInt(boost::asio::io_context& ios,
                            boost::asio::yield_context yield);
 
     Manager& manager_;

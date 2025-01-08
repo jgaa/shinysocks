@@ -14,7 +14,7 @@ using boost::asio::ip::tcp;
 
 void SleepUntilDoomdsay()
 {
-    boost::asio::io_service main_thread_service;
+    boost::asio::io_context main_thread_service;
 
     boost::asio::signal_set signals(main_thread_service, SIGINT, SIGTERM
 #ifdef SIGQUIT
@@ -150,20 +150,22 @@ int main(int argc, char **argv) {
     // Start acceptor(s)
     Manager manager(conf);
     {
-        boost::asio::io_service io_service;
+        boost::asio::io_context io_context;
         for(auto &node :  opts.get_child("interfaces")) {
 
             auto host = node.second.get<string>("hostname");
             auto port = node.second.get<string>("port");
 
             LOG_INFO << "Resolving host=" << host << ", port=" << port;
+            boost::system::error_code ec;
+            boost::asio::ip::tcp::resolver resolver(io_context);
+            auto results = resolver.resolve(host, port, ec);
 
-            tcp::resolver resolver(io_service);
-            auto address_it = resolver.resolve({host, port});
-            decltype(address_it) addr_end;
-
-            for(; address_it != addr_end; ++address_it) {
-                auto iface = make_unique<Listener>(manager, *address_it);
+            if (ec) {
+                throw std::runtime_error("Failed to resolve address: " + ec.message());
+            }
+            for (auto it = results.begin(); it != results.end(); ++it) {
+                auto iface = std::make_unique<Listener>(manager, *it);
                 iface->StartAccepting();
                 listeners.push_back(std::move(iface));
             }
