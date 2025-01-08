@@ -108,7 +108,8 @@ void Proxy::RunInt(boost::asio::yield_context& yield) {
                             shared_from_this(),
                             ref(server_), ref(client_),
                             ref(bytes_relayed_to_client_),
-                            std::placeholders::_1));
+                            std::placeholders::_1),
+                       boost::asio::detached);
 
     // Send whatever that was left of data after the header was parsed
     if (!remaining_buffer_.empty()) {

@@ -22,7 +22,8 @@ void Listener::StartAccepting() {
     boost::asio::spawn(ios,
                        bind(&Listener::StartAcceptingInt,
                             this, ref(ios),
-                            std::placeholders::_1));
+                            std::placeholders::_1),
+                       boost::asio::detached);
 }
 
 
@@ -41,7 +42,8 @@ void Listener::StartAcceptingInt(boost::asio::io_service& ios,
             boost::asio::spawn(socket.GET_IO_SERVICE_OR_EXECURTOR(),
                                bind(&Proxy::Run,
                                     proxy,
-                                    std::placeholders::_1));
+                                    std::placeholders::_1),
+                               boost::asio::detached);
         }
     } catch(const std::exception& ex) {
         LOG_ERROR << "StartAccepting: Caught exception: "
