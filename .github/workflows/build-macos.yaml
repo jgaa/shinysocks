@@ -20,7 +20,8 @@ jobs:
         run: |
           # Install essential tools
           brew update
-          brew install cmake ninja llvm boost
+          brew install cmake ninja llvm
+          brew reinstall boost --build-from-source --universal
 
       - name: Configure Build
         run: |
