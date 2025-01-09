@@ -1,0 +1,52 @@
+name: Build Universal macOS Binary
+
+on:
+  push:
+    branches:
+      - automation
+  pull_request:
+
+jobs:
+  build-universal-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install Dependencies
+        run: |
+          # Install essential tools
+          brew update
+          brew install cmake ninja llvm boost
+
+      - name: Configure Build
+        run: |
+          mkdir -p build
+          pushd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
+                   -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+                   -DBOOST_ROOT=$(brew --prefix boost)
+          popd
+
+      - name: Build Project
+        run: |
+          pushd build
+          cmake --build .
+          popd
+
+      - name: Prepare Universal Binary
+        run: |
+          mkdir -p artifacts
+          lipo -create -output artifacts/universal_binary \
+            build/bin/your_binary_arm64 \
+            build/bin/your_binary_x86_64
+
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: universal-macos-build
+          path: artifacts/*
+          retention-days: 1
