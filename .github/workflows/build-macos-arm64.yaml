@@ -27,7 +27,6 @@ jobs:
           mkdir -p build
           pushd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES=arm64 \
                    -DBOOST_ROOT=$(brew --prefix boost)
           popd
 

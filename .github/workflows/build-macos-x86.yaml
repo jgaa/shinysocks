@@ -23,7 +23,7 @@ jobs:
             brew install cmake ninja llvm
 
             # Ensure Boost is installed specifically for x86_64
-            arch -x86_64 /usr/local/bin/brew install boost
+            arch -x86_64 brew install boost
 
       - name: Configure Build
         run: |
