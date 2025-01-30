@@ -1,10 +1,10 @@
 name: Build macOS arm64 Project
 
-on:
-  push:
-    branches:
-      - automation
-  pull_request:
+# on:
+#   push:
+#     branches:
+#       - automation
+#   pull_request:
 
 jobs:
   build-macos-arm64:
