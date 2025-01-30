@@ -1,10 +1,10 @@
 name: Build Universal macOS Binary
 
-# on:
-#   push:
-#     branches:
-#       - automation
-#   pull_request:
+on:
+  push:
+    branches:
+      - automation
+  pull_request:
 
 jobs:
   build-universal-macos:
@@ -18,19 +18,25 @@ jobs:
 
       - name: Install Dependencies
         run: |
-            # Install essential tools for the runner architecture
-            brew update
-            brew install cmake ninja llvm
+          # Install essential tools
+          brew update
+          brew install cmake ninja llvm
 
-            # Ensure Boost is installed specifically for x86_64
-            arch -x86_64 brew install boost
+          # Install Boost for both architectures
+          if [[ $(uname -m) == "arm64" ]]; then
+            echo "Installing Boost for Universal Build"
+            arch -x86_64 /opt/homebrew/bin/brew install boost
+            brew install boost
+          else
+            brew install boost
+          fi
 
       - name: Configure Build
         run: |
           mkdir -p build
           pushd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES="x86_64" \
+                   -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
                    -DBOOST_ROOT=$(brew --prefix boost)
           popd
 
@@ -43,13 +49,19 @@ jobs:
       - name: Prepare Universal Binary
         run: |
           mkdir -p artifacts
+
+          # Merge arm64 and x86_64 binaries (if built separately)
           lipo -create -output artifacts/universal_binary \
-            build/bin/your_binary_arm64 \
-            build/bin/your_binary_x86_64
+            build/bin/shinysocks_arm64 \
+            build/bin/shinysocks_x86_64
+
+      - name: Verify Universal Binary
+        run: |
+          file artifacts/universal_binary
 
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: universal-macos-build
+          name: macos-universal-build
           path: artifacts/*
           retention-days: 1
