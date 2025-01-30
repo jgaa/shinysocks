@@ -16,14 +16,14 @@ jobs:
         with:
           submodules: true
 
-      - name: Install x86_64 Homebrew (if missing)
-        run: |
-          if [[ ! -d "/usr/local/Homebrew" ]]; then
-            echo "Installing Homebrew for x86_64..."
-            arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          else
-            echo "x86_64 Homebrew already installed."
-          fi
+      # - name: Install x86_64 Homebrew (if missing)
+      #   run: |
+      #     if [[ ! -d "/usr/local/Homebrew" ]]; then
+      #       echo "Installing Homebrew for x86_64..."
+      #       arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      #     else
+      #       echo "x86_64 Homebrew already installed."
+      #     fi
 
       - name: Install Dependencies
         run: |
@@ -31,12 +31,19 @@ jobs:
           brew update
           brew install cmake ninja llvm
 
-          # Install Boost separately for each architecture
-          echo "Installing Boost for arm64..."
-          brew install boost
+      - name: Install Universal Boost
+        run: |
+            # Remove existing Boost installations
+            brew uninstall --ignore-dependencies boost || true
 
-          echo "Installing Boost for x86_64..."
-          arch -x86_64 /usr/local/bin/brew install boost
+            # Compile Boost for both x86_64 and arm64
+            brew install boost --build-from-source --formula \
+            CXXFLAGS="-arch x86_64 -arch arm64" \
+            CFLAGS="-arch x86_64 -arch arm64" \
+            LDFLAGS="-arch x86_64 -arch arm64"
+
+            # Verify Boost architecture
+            file $(brew --prefix boost)/lib/libboost_system.dylib
 
       - name: Configure Build
         run: |
