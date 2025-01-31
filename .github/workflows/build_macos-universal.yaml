@@ -1,61 +1,94 @@
-name: Build Universal C++ Application with Boost
+name: Build macOS Universal (Fat) Libraries with Conan
 
 on:
   push:
-    branches:
-      - '*'
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build-macos-universal:
     runs-on: macos-latest
 
-
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Install Build Tools
+      - name: Install Dependencies
         run: |
-            brew update
-            brew install cmake ninja llvm
+          brew update
+          brew install cmake ninja python
+          python -m pip install --upgrade pip
+          pip install conan
 
-      - name: Download boost
+      - name: Configure Conan Profiles
         run: |
-          curl -s -L https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.bz2 -o boost.tar.bz2
-          tar -xjf boost.tar.bz2
+          # If you already have custom profiles, you can skip creating them, or adapt as needed.
+          conan profile new default --detect --force
 
-      - name: Build and install Boost for both architectures
+          # Profile for x86_64
+          conan profile new macos_x86_64 --detect --force
+          conan profile update settings.arch=x86_64 macos_x86_64
+          conan profile update settings.build_type=Release macos_x86_64
+          conan profile update settings.compiler.libcxx=libc++ macos_x86_64
+
+          # Profile for arm64 (Conan calls it 'armv8' on macOS)
+          conan profile new macos_armv8 --detect --force
+          conan profile update settings.arch=armv8 macos_armv8
+          conan profile update settings.build_type=Release macos_armv8
+          conan profile update settings.compiler.libcxx=libc++ macos_armv8
+
+      - name: Build Boost (x86_64)
         run: |
-          cd boost_1_87_0
-          ./bootstrap.sh
-          ./b2 address-model=64 architecture=arm+x86 link=static threading=multi runtime-link=static --with-system --with-program_options --with-serialization --with-context --with-coroutine
-          sudo ./b2 install
+          # You can pin the Boost version or reference if you prefer, e.g. boost/1.86.0
+          conan install boost/1.86.0@ --profile macos_x86_64 --build=missing --update
+          # The above installs all Boost components. If you want only certain components,
+          # look at the recipe options for selectively disabling modules:
+          # e.g. -o boost:without_test=True, etc.
 
-      - name: Configure Build
+          # This example does not show how to retrieve the final .a files yet.
+          # We'll do that after the second build.
+
+      - name: Build Boost (arm64)
         run: |
-          mkdir -p build
-          pushd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
-          popd
+          conan install boost/1.86.0@ --profile macos_armv8 --build=missing --update
 
-      - name: Build Project
+      - name: Locate and Combine Libraries via lipo
         run: |
-          pushd build
-          cmake --build .
-          popd
+          # In general, Conan will put the package in ~/.conan/data/boost/<version>/<user>/<channel>/package/<package_id>/
+          # We need to find the x86_64 and arm64 directories. This step is somewhat fragile because
+          # package_ids can differ if any options or dependencies changed.
+          #
+          # For demonstration, we do a rough search. In real code, pin the package_id or
+          # parse conanbuildinfo.txt to find exact library paths.
 
-      - name: Prepare Universal Binary
+          X86_BOOST_DIR=$(ls -d1 ~/.conan/data/boost/1.86.0/_/_/package/* | grep "x86_64" | head -n 1)
+          ARM_BOOST_DIR=$(ls -d1 ~/.conan/data/boost/1.86.0/_/_/package/* | grep "armv8" | head -n 1)
+
+          echo "x86_64 Boost: $X86_BOOST_DIR"
+          echo "arm64 Boost:  $ARM_BOOST_DIR"
+
+          UNIVERSAL_OUTPUT_DIR="${GITHUB_WORKSPACE}/boost_universal"
+          mkdir -p "${UNIVERSAL_OUTPUT_DIR}"
+
+          # This example shows how to lipo a few key libraries. You can automate or expand for all Boost libs you need.
+          for LIB in libboost_system libboost_program_options libboost_serialization \
+                     libboost_context libboost_coroutine libboost_asio libboost_property_tree
+          do
+            X86_LIB="${X86_BOOST_DIR}/lib/${LIB}.a"
+            ARM_LIB="${ARM_BOOST_DIR}/lib/${LIB}.a"
+            OUT_LIB="${UNIVERSAL_OUTPUT_DIR}/${LIB}.a"
+
+            if [ -f "${X86_LIB}" ] && [ -f "${ARM_LIB}" ]; then
+              echo "Creating universal library for ${LIB}.a"
+              lipo -create "${X86_LIB}" "${ARM_LIB}" -output "${OUT_LIB}"
+              lipo -info "${OUT_LIB}"
+            else
+              echo "Warning: ${LIB}.a not found for both architectures."
+            fi
+          done
+
+      - name: Show final universal libs
         run: |
-          ls -la  build/bin/
-          mkdir -p artifacts
-          lipo -create -output artifacts/universal_binary \
-            build/bin/your_binary_arm64 \
-            build/bin/your_binary_x86_64
-
-      - name: Archive Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: universal-macos-build
-          path: artifacts/*
-          retention-days: 1
+          ls -al "${GITHUB_WORKSPACE}/boost_universal"
+          file "${GITHUB_WORKSPACE}/boost_universal"/*.a
