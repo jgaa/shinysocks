@@ -21,22 +21,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install conan
 
-      - name: Configure Conan Profiles
+      - name: Configure Conan Profiles (Conan 2)
         run: |
-          # If you already have custom profiles, you can skip creating them, or adapt as needed.
-          conan profile new default --detect --force
+            # Detect and create a profile for x86_64
+            conan profile detect --force --name=macos_x86_64
+            conan profile update macos_x86_64 settings.arch=x86_64
+            conan profile update macos_x86_64 settings.build_type=Release
+            conan profile update macos_x86_64 settings.compiler.libcxx=libc++
 
-          # Profile for x86_64
-          conan profile new macos_x86_64 --detect --force
-          conan profile update settings.arch=x86_64 macos_x86_64
-          conan profile update settings.build_type=Release macos_x86_64
-          conan profile update settings.compiler.libcxx=libc++ macos_x86_64
+            # Detect and create a profile for arm64 (named 'armv8' internally, but
+            # typically referred to as arm64 in macOS)
+            conan profile detect --force --name=macos_armv8
+            conan profile update macos_armv8 settings.arch=armv8
+            conan profile update macos_armv8 settings.build_type=Release
+            conan profile update macos_armv8 settings.compiler.libcxx=libc++
 
-          # Profile for arm64 (Conan calls it 'armv8' on macOS)
-          conan profile new macos_armv8 --detect --force
-          conan profile update settings.arch=armv8 macos_armv8
-          conan profile update settings.build_type=Release macos_armv8
-          conan profile update settings.compiler.libcxx=libc++ macos_armv8
 
       - name: Build Boost (x86_64)
         run: |
