@@ -36,7 +36,7 @@ jobs:
           mkdir -p build
           pushd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES="x86_64"
+                   -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
           popd
 
       - name: Build Project
