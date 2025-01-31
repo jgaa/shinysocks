@@ -35,10 +35,7 @@ jobs:
         run: |
 
             # Compile Boost for both x86_64 and arm64
-            brew install boost --build-from-source --formula \
-            CXXFLAGS="-arch x86_64 -arch arm64" \
-            CFLAGS="-arch x86_64 -arch arm64" \
-            LDFLAGS="-arch x86_64 -arch arm64"
+            brew install boost --universal
 
             # Verify Boost architecture
             file $(brew --prefix boost)/lib/libboost_system.dylib
