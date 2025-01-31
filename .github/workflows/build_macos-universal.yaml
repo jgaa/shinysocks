@@ -33,8 +33,6 @@ jobs:
 
       - name: Install Universal Boost
         run: |
-            # Remove existing Boost installations
-            brew uninstall --ignore-dependencies boost || true
 
             # Compile Boost for both x86_64 and arm64
             brew install boost --build-from-source --formula \
