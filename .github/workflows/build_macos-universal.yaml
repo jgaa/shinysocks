@@ -1,99 +1,62 @@
-name: Build Universal macOS Binary with vcpkg (Manifest Mode)
+name: Build Universal C++ Application with Boost
 
 on:
   push:
     branches:
-      - automation
+      - main
   pull_request:
+    branches:
+      - main
 
 jobs:
-  build-universal-macos:
+  build:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        architecture: [x86_64, arm64]
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Install Dependencies
+      - name: Setup Boost for ${{ matrix.architecture }}
         run: |
-          # Install essential tools (native)
-          brew update
-          brew install cmake ninja llvm
+          if [ "${{ matrix.architecture }}" == "x86_64" ]; then
+            ARCH_FLAGS="-arch x86_64"
+          else
+            ARCH_FLAGS="-arch arm64"
+          fi
+          ./bootstrap.sh
+          ./b2 address-model=64 architecture=$ARCH_FLAGS
 
-      - name: Install vcpkg
+      - name: Install Boost for ${{ matrix.architecture }}
         run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          cd vcpkg
-          ./bootstrap-vcpkg.sh
-          echo "VCPKG_ROOT=$PWD" >> $GITHUB_ENV
+          if [ "${{ matrix.architecture }}" == "x86_64" ]; then
+            sudo ./b2 install --prefix=/usr/local/boost-x86_64
+          else
+            sudo ./b2 install --prefix=/usr/local/boost-arm64
+          fi
 
-      - name: Create vcpkg.json Manifest File
+      - name: Merge Boost libraries to create universal binaries
+        if: matrix.architecture == 'x86_64'
         run: |
-          cat <<EOF > vcpkg.json
-          {
-            "name": "shinysocks",
-            "version": "1.0.0",
-            "dependencies": [
-              "boost-exception",
-              "boost-program-options",
-              "boost-property-tree",
-              "boost-asio",
-              "boost-system",
-              "boost-thread"
-            ]
-          }
-          EOF
-
-      - name: Install Boost for x86_64
-        run: |
-          CXXFLAGS="-arch x86_64" $VCPKG_ROOT/vcpkg install --triplet=x64-osx
-
-      - name: Install Boost for arm64
-        run: |
-          CXXFLAGS="-arch arm64" $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
-
-      - name: Merge Boost Libraries into a Universal Binary
-        run: |
-          mkdir -p build/boost-universal
-          for lib in $(ls $VCPKG_ROOT/installed/x64-osx/lib/libboost_*.a); do
+          mkdir -p /usr/local/boost-universal/lib
+          for lib in /usr/local/boost-x86_64/lib/*.a; do
             libname=$(basename $lib)
-            lipo -create -output build/boost-universal/$libname \
-              $VCPKG_ROOT/installed/x64-osx/lib/$libname \
-              $VCPKG_ROOT/installed/arm64-osx/lib/$libname
+            lipo -create $lib /usr/local/boost-arm64/lib/$libname -output /usr/local/boost-universal/lib/$libname
           done
 
-      - name: Configure Build with vcpkg
-        run: |
-          mkdir -p build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
-                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
-                   -DBOOST_ROOT=$(pwd)/boost-universal
-          cd ..
-
-      - name: Build Project
-        run: |
-          cd build
-          cmake --build .
-          cd ..
-
-      - name: Merge App Binaries into a Universal Binary
-        run: |
-          mkdir -p artifacts
-          lipo -create -output artifacts/universal_binary \
-            build/bin/shinysocks_arm64 \
-            build/bin/shinysocks_x86_64
-
-      - name: Verify Universal Binary
-        run: |
-          file artifacts/universal_binary
-
-      - name: Archive Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-universal-build
-          path: artifacts/*
-          retention-days: 1
+      # - name: Build universal C++ application
+      #   if: matrix.architecture == 'x86_64'
+      #   run: |
+      #     mkdir -p build
+      #     cd build
+      #     cmake .. -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DBOOST_ROOT=/usr/local/boost-universal
+      #     make
+      #
+      # - name: Upload artifacts
+      #   if: matrix.architecture == 'x86_64'
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: universal-application
+      #     path: build/my_application
