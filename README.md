@@ -1,6 +1,7 @@
 # ShinySOCKS
 
 [![CI](https://github.com/jgaa/shinysocks/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/jgaa/shinysocks/actions/workflows/ci.yaml)
+[![macOS Universal](https://github.com/jgaa/shinysocks/actions/workflows/build_macos-universal.yaml/badge.svg)](https://github.com/jgaa/shinysocks/actions/workflows/build_macos-universal.yaml)
 
 ## Mission Statement
 
