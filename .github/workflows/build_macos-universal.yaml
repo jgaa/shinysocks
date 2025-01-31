@@ -1,3 +1,10 @@
+name: Build Universal C++ Application with Boost
+
+on:
+  push:
+    branches:
+      - '*'
+
 jobs:
   build:
     runs-on: macos-latest
