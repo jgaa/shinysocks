@@ -23,7 +23,7 @@ jobs:
         run: |
           cd boost_1_87_0
           ./bootstrap.sh
-          ./b2 address-model=64 architecture=arm+x86 link=static threading=multi runtime-link=static --with-system --with-program_options --with-serialization --with-context --with-coroutine --with-asio --with-property_tree
+          ./b2 address-model=64 architecture=arm+x86 link=static threading=multi runtime-link=static --with-system --with-program_options --with-serialization --with-context --with-coroutine --with-property_tree
           sudo ./b2 install
           # for ARCH in intel arm; do
           #   if [ "$ARCH" == "intel" ]; then
