@@ -1,93 +1,74 @@
-name: Build macOS Universal (Fat) Libraries with Conan
-
+name: Build arm64
 on:
   push:
-    branches: [ "*" ]
+    branches:
+      - '*'
   pull_request:
-    branches: [ "main" ]
 
 jobs:
-  build-macos-universal:
+  build-universal-macos:
     runs-on: macos-latest
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Install Dependencies
         run: |
+          # Install essential tools (native)
           brew update
-          brew install cmake ninja python
-          python -m pip install --upgrade pip
-          pip install conan
-
-      - name: Configure Conan Profiles (Conan 2)
+          brew install cmake ninja llvm
+      - name: Install vcpkg
         run: |
-            # Detect and create a profile for x86_64
-            conan profile detect --force --name=macos_x86_64
-            conan profile update macos_x86_64 settings.arch=x86_64
-            conan profile update macos_x86_64 settings.build_type=Release
-            conan profile update macos_x86_64 settings.compiler.libcxx=libc++
-
-            # Detect and create a profile for arm64 (named 'armv8' internally, but
-            # typically referred to as arm64 in macOS)
-            conan profile detect --force --name=macos_armv8
-            conan profile update macos_armv8 settings.arch=armv8
-            conan profile update macos_armv8 settings.build_type=Release
-            conan profile update macos_armv8 settings.compiler.libcxx=libc++
-
-
-      - name: Build Boost (x86_64)
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+          echo "VCPKG_ROOT=$PWD" >> $GITHUB_ENV
+          echo "$VCPKG_ROOT" >> $GITHUB_PATH
+          ls $VCPKG_ROOT
+      - name: Install Boost for x86_64
         run: |
-          # You can pin the Boost version or reference if you prefer, e.g. boost/1.86.0
-          conan install boost/1.86.0@ --profile macos_x86_64 --build=missing --update
-          # The above installs all Boost components. If you want only certain components,
-          # look at the recipe options for selectively disabling modules:
-          # e.g. -o boost:without_test=True, etc.
-
-          # This example does not show how to retrieve the final .a files yet.
-          # We'll do that after the second build.
-
-      - name: Build Boost (arm64)
+          $VCPKG_ROOT/vcpkg install --triplet=x64-osx
+      #- name: Install Boost for arm64
+      #   run: |
+      #     CXXFLAGS="-arch arm64" $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
+      # - name: Merge Boost Libraries into a Universal Binary
+      #   run: |
+      #     mkdir -p build/boost-universal
+      #     for lib in $(ls $VCPKG_ROOT/installed/x64-osx/lib/libboost_*.a); do
+      #       libname=$(basename $lib)
+      #       lipo -create -output build/boost-universal/$libname \
+      #         $VCPKG_ROOT/installed/x64-osx/lib/$libname \
+      #         $VCPKG_ROOT/installed/arm64-osx/lib/$libname
+      #     done
+      - name: Configure Build with vcpkg
         run: |
-          conan install boost/1.86.0@ --profile macos_armv8 --build=missing --update
-
-      - name: Locate and Combine Libraries via lipo
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
+                   -DCMAKE_OSX_ARCHITECTURES="arm64" \
+                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" 
+          cd ..
+      - name: Build Project
         run: |
-          # In general, Conan will put the package in ~/.conan/data/boost/<version>/<user>/<channel>/package/<package_id>/
-          # We need to find the x86_64 and arm64 directories. This step is somewhat fragile because
-          # package_ids can differ if any options or dependencies changed.
-          #
-          # For demonstration, we do a rough search. In real code, pin the package_id or
-          # parse conanbuildinfo.txt to find exact library paths.
-
-          X86_BOOST_DIR=$(ls -d1 ~/.conan/data/boost/1.86.0/_/_/package/* | grep "x86_64" | head -n 1)
-          ARM_BOOST_DIR=$(ls -d1 ~/.conan/data/boost/1.86.0/_/_/package/* | grep "armv8" | head -n 1)
-
-          echo "x86_64 Boost: $X86_BOOST_DIR"
-          echo "arm64 Boost:  $ARM_BOOST_DIR"
-
-          UNIVERSAL_OUTPUT_DIR="${GITHUB_WORKSPACE}/boost_universal"
-          mkdir -p "${UNIVERSAL_OUTPUT_DIR}"
-
-          # This example shows how to lipo a few key libraries. You can automate or expand for all Boost libs you need.
-          for LIB in libboost_system libboost_program_options libboost_serialization \
-                     libboost_context libboost_coroutine libboost_asio libboost_property_tree
-          do
-            X86_LIB="${X86_BOOST_DIR}/lib/${LIB}.a"
-            ARM_LIB="${ARM_BOOST_DIR}/lib/${LIB}.a"
-            OUT_LIB="${UNIVERSAL_OUTPUT_DIR}/${LIB}.a"
-
-            if [ -f "${X86_LIB}" ] && [ -f "${ARM_LIB}" ]; then
-              echo "Creating universal library for ${LIB}.a"
-              lipo -create "${X86_LIB}" "${ARM_LIB}" -output "${OUT_LIB}"
-              lipo -info "${OUT_LIB}"
-            else
-              echo "Warning: ${LIB}.a not found for both architectures."
-            fi
-          done
-
-      - name: Show final universal libs
-        run: |
-          ls -al "${GITHUB_WORKSPACE}/boost_universal"
-          file "${GITHUB_WORKSPACE}/boost_universal"/*.a
+          cd build
+          cmake --build .
+          cd ..
+      
+      # - name: Merge App Binaries into a Universal Binary
+      #   run: |
+      #     mkdir -p artifacts
+      #     lipo -create -output artifacts/universal_binary \
+      #       build/bin/shinysocks_arm64 \
+      #       build/bin/shinysocks_x86_64
+      # - name: Verify Universal Binary
+      #   run: |
+      #     file artifacts/universal_binary
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal-build
+          path: artifacts/*
+          retention-days: 1
