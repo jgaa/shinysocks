@@ -48,14 +48,15 @@ jobs:
           mkdir -p build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES="arm64" \
-                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" 
-          cd ..
+                   -DCMAKE_OSX_ARCHITECTURES="x86_64"\
+                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"         
       - name: Build Project
         run: |
           cd build
           cmake --build .
-          cd ..
+          mkdir -p ../artifacts
+          cp -v bin/shinysocks ../artifacts/shinysocks_x86_64
+          
       
       # - name: Merge App Binaries into a Universal Binary
       #   run: |
@@ -69,6 +70,6 @@ jobs:
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-universal-build
+          name: logfault-macos-x86_64
           path: artifacts/*
           retention-days: 1
