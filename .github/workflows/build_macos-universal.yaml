@@ -1,4 +1,4 @@
-name: Build arm64
+name: Build macOS Universal Binary
 on:
   push:
     branches:
@@ -20,6 +20,7 @@ jobs:
           # Install essential tools (native)
           brew update
           brew install cmake ninja llvm
+
       - name: Install vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git
@@ -28,45 +29,56 @@ jobs:
           echo "VCPKG_ROOT=$PWD" >> $GITHUB_ENV
           echo "$VCPKG_ROOT" >> $GITHUB_PATH
           ls $VCPKG_ROOT
+
       - name: Install Boost for x86_64
         run: |
           $VCPKG_ROOT/vcpkg install --triplet=x64-osx
-      #- name: Install Boost for arm64
-      #   run: |
-      #     CXXFLAGS="-arch arm64" $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
-      # - name: Merge Boost Libraries into a Universal Binary
-      #   run: |
-      #     mkdir -p build/boost-universal
-      #     for lib in $(ls $VCPKG_ROOT/installed/x64-osx/lib/libboost_*.a); do
-      #       libname=$(basename $lib)
-      #       lipo -create -output build/boost-universal/$libname \
-      #         $VCPKG_ROOT/installed/x64-osx/lib/$libname \
-      #         $VCPKG_ROOT/installed/arm64-osx/lib/$libname
-      #     done
-      - name: Configure Build with vcpkg
+
+      - name: Install Boost for arm64
         run: |
-          mkdir -p build
-          cd build
+            $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
+
+      - name: Configure Build with vcpkg for x86_64
+        run: |
+          mkdir -p build_x86_64
+          cd build_x86_64
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
                    -DCMAKE_OSX_ARCHITECTURES="x86_64"\
                    -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"         
-      - name: Build Project
+
+      - name: Build Project for x86_64
         run: |
-          cd build
+          cd build_x86_64
           cmake --build .
-          mkdir -p ../artifacts
-          cp -v bin/shinysocks ../artifacts/shinysocks_x86_64
+          # mkdir -p ../artifacts
+          # cp -v bin/shinysocks ../artifacts/shinysocks_x86_64
           
+      - name: Configure Build with vcpkg for arm64
+        run: |
+          mkdir -p build_arm64
+          cd build_arm64
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
+                   -DCMAKE_OSX_ARCHITECTURES="arm64"\
+                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+      - name: Build Project for arm64
+        run: |
+          cd build_arm64
+          cmake --build .
+          # mkdir -p ../artifacts
+          # cp -v bin/shinysocks ../artifacts/shinysocks_arm64
       
-      # - name: Merge App Binaries into a Universal Binary
-      #   run: |
-      #     mkdir -p artifacts
-      #     lipo -create -output artifacts/universal_binary \
-      #       build/bin/shinysocks_arm64 \
-      #       build/bin/shinysocks_x86_64
-      # - name: Verify Universal Binary
-      #   run: |
-      #     file artifacts/universal_binary
+      - name : Combine the binaries into a universal binary
+        run: |
+          mkdir -p artifacts
+          lipo -create -output artifacts/universal_binary \
+            build_x86_64/bin/shinysocks \
+            build_arm64/bin/shinysocks
+      
+      - name: Verify Universal Binary
+        run: |
+          file artifacts/universal_binary
+          
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
         with:
