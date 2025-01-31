@@ -8,7 +8,7 @@ endif()
 project(shinysocks
     DESCRIPTION "Socks Proxy server"
     HOMEPAGE_URL https://github.com/jgaa/shinysocks
-    VERSION 1.3.4
+    VERSION 1.3.5
     LANGUAGES CXX
 )
 

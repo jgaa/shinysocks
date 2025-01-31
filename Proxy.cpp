@@ -10,7 +10,7 @@ using boost::asio::ip::tcp;
 namespace shinysocks {
 
 Proxy::Proxy(tcp::socket&& sck)
-: client_(move(sck)), server_(client_.GET_IO_SERVICE_OR_EXECURTOR())
+: client_(move(sck)), server_(client_.GET_IO_CONTEXT_OR_EXECURTOR())
 {
 }
 
@@ -103,12 +103,13 @@ void Proxy::RunInt(boost::asio::yield_context& yield) {
 
 
     // Forward traffic from server to client
-    boost::asio::spawn(client_.GET_IO_SERVICE_OR_EXECURTOR(),
+    boost::asio::spawn(client_.GET_IO_CONTEXT_OR_EXECURTOR(),
                         bind(&Proxy::RelayRoot,
                             shared_from_this(),
                             ref(server_), ref(client_),
                             ref(bytes_relayed_to_client_),
-                            std::placeholders::_1));
+                            std::placeholders::_1),
+                       boost::asio::detached);
 
     // Send whatever that was left of data after the header was parsed
     if (!remaining_buffer_.empty()) {
@@ -171,17 +172,19 @@ void Proxy::ParseV4Header(const char *buffer,
         const string host(host_start, host_end);
         LOG_INFO << "Will try to connect to: " << host;
 
-        tcp::resolver resolver(client_.GET_IO_SERVICE_OR_EXECURTOR());
-        auto address_it = resolver.async_resolve({host, to_string(port_)},
-                                                    yield);
-        decltype(address_it) addr_end;
+        boost::asio::ip::tcp::resolver resolver(client_.get_executor());
+        boost::system::error_code ec;
 
-        if (address_it == addr_end) {
+        // Perform asynchronous resolve using Boost 1.86 compatible approach
+        auto results = resolver.async_resolve(host, std::to_string(port_), yield[ec]);
+
+        if (ec || results.begin() == results.end()) {
             Reply(ReplyVal::RESOLVER_FAILED, {}, yield);
-            throw runtime_error("Failed to lookup domain-name");
+            throw std::runtime_error("Failed to lookup domain-name: " + ec.message());
         }
 
-        endpoint_ = *address_it;
+
+        endpoint_ = *results.begin();
 
     } else {
         boost::asio::ip::address_v4 addr(ipv4_);
@@ -312,17 +315,19 @@ again:
                     LOG_INFO
                         << "ParseV5Header: Will try to connect to: " << hostname;
 
-                    tcp::resolver resolver(client_.GET_IO_SERVICE_OR_EXECURTOR());
-                    auto address_it = resolver.async_resolve({hostname, to_string(port_)},
-                                                             yield);
-                    decltype(address_it) addr_end;
+                    // endpoint_ = *address_it;
+                    boost::asio::ip::tcp::resolver resolver(client_.get_executor());
+                    boost::system::error_code ec;
 
-                    if (address_it == addr_end) {
+                    // Perform asynchronous resolve using Boost 1.86 compatible approach
+                    auto results = resolver.async_resolve(hostname, std::to_string(port_), yield[ec]);
+
+                    if (ec || results.begin() == results.end()) {
                         Reply(ReplyVal::RESOLVER_FAILED, {}, yield);
-                        throw runtime_error("Failed to lookup domain-name");
+                        throw std::runtime_error("Failed to lookup domain-name: " + ec.message());
                     }
 
-                    endpoint_ = *address_it;
+                    endpoint_ = *results.begin();
 
                     LOG_DEBUG << "ParseV5Header: host-lookup endpoint: "
                         << endpoint_;
@@ -438,7 +443,7 @@ void Proxy::Reply(ReplyVal ReplyVal,
 
     *port = htons(ep.port());
     if (ep.address().is_v4()) {
-        *ip = htonl(ep.address().to_v4().to_ulong());
+        *ip = htonl(ep.address().to_v4().to_uint());
     } else {
          // TODO: ipv6/hostname/SOCKS5
         *ip = 0;

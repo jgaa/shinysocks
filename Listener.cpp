@@ -1,6 +1,7 @@
 
 #include "shinysocks.h"
 #include "logging.h"
+#include <boost/exception/diagnostic_information.hpp>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -22,11 +23,12 @@ void Listener::StartAccepting() {
     boost::asio::spawn(ios,
                        bind(&Listener::StartAcceptingInt,
                             this, ref(ios),
-                            std::placeholders::_1));
+                            std::placeholders::_1),
+                       boost::asio::detached);
 }
 
 
-void Listener::StartAcceptingInt(boost::asio::io_service& ios,
+void Listener::StartAcceptingInt(boost::asio::io_context& ios,
                                  boost::asio::yield_context yield) {
     try {
         boost::asio::ip::tcp::acceptor acceptor(ios, endpoint_, true);
@@ -38,17 +40,18 @@ void Listener::StartAcceptingInt(boost::asio::io_service& ios,
             LOG_INFO << "Incoming connection on socket.";
 
             auto proxy = make_shared<Proxy>(move(socket));
-            boost::asio::spawn(socket.GET_IO_SERVICE_OR_EXECURTOR(),
+            boost::asio::spawn(socket.GET_IO_CONTEXT_OR_EXECURTOR(),
                                bind(&Proxy::Run,
                                     proxy,
-                                    std::placeholders::_1));
+                                    std::placeholders::_1),
+                               boost::asio::detached);
         }
-    } catch(const std::exception& ex) {
-        LOG_ERROR << "StartAccepting: Caught exception: "
-            << ex.what() ;
-    } catch(const boost::exception& ex) {
+    } catch (const boost::exception& ex) {
         LOG_ERROR << "StartAccepting: Caught boost exception: "
-            << boost::diagnostic_information(ex);
+                  << boost::diagnostic_information(ex);
+    } catch (const std::exception& ex) {
+        LOG_ERROR << "StartAccepting: Caught standard exception: "
+                  << ex.what();
     }
 }
 

@@ -26,15 +26,15 @@ void Manager::Thread::Start() {
 }
 
 void Manager::Thread::Run() {
-    LOG_DEBUG << "Run: Starting io_service in one thread";
+    LOG_DEBUG << "Run: Starting io_context in one thread";
 
     // Keep the io-service running, also when the queue is empty
-    boost::asio::io_service::work work(io_service_);
+    auto work_guard = boost::asio::make_work_guard(io_context_);
 
     // Run the io-service
-    io_service_.run();
+    io_context_.run();
 
-    LOG_DEBUG << "Run: Ended io_service in one thread";
+    LOG_DEBUG << "Run: Ended io_context in one thread";
 }
 
 void Manager::WaitForAllThreads() {
