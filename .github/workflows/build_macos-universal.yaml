@@ -14,6 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install Build Tools
+        run: |
+            brew update
+            brew install cmake ninja llvm
+
       - name: Download boost
         run: |
           curl -s -L https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.bz2 -o boost.tar.bz2
@@ -25,40 +30,32 @@ jobs:
           ./bootstrap.sh
           ./b2 address-model=64 architecture=arm+x86 link=static threading=multi runtime-link=static --with-system --with-program_options --with-serialization --with-context --with-coroutine
           sudo ./b2 install
-          # for ARCH in intel arm; do
-          #   if [ "$ARCH" == "intel" ]; then
-          #     ARCH_FLAGS="-arch x86"
-          #     PREFIX="/usr/local/boost-x86"
-          #   else
-          #     ARCH_FLAGS="-arch arm64"
-          #     PREFIX="/usr/local/boost-arm64"
-          #   fi
-          #   cd boost_1_87_0
-          #   ./bootstrap.sh
-          #   ./b2 address-model=64 architecture=$ARCH_FLAGS link=static threading=multi runtime-link=static --with-system --with-program_options --with-serialization --with-context --with-coroutine --with-asio
-          #   sudo ./b2 install --prefix=$PREFIX
-          #   cd ..
-          #   # Clean up after each build
-          #   rm -rf boost_1_87_0
-          #   tar -xzf boost.tar.gz
-          # done
 
-      # - name: Merge Boost libraries to create universal binaries
-      #   run: |
-      #     mkdir -p /usr/local/boost-universal/lib
-      #     for lib in /usr/local/boost-x86_64/lib/*.a; do
-      #       libname=$(basename $lib)
-      #       lipo -create $lib /usr/local/boost-arm64/lib/$libname -output /usr/local/boost-universal/lib/$libname
-      #     done
+      - name: Configure Build
+        run: |
+          mkdir -p build
+          pushd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
+                   -DCMAKE_OSX_ARCHITECTURES="x86_64"
+          popd
 
-      # - name: Build universal C++ application
-      #   run: |
-      #     mkdir -p build
-      #     cd build
-      #     cmake .. -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DBOOST_ROOT=/usr/local/boost-universal
-      #     make
-      #
-      # - name: Upload artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: universal-application
+      - name: Build Project
+        run: |
+          pushd build
+          cmake --build .
+          popd
+
+      - name: Prepare Universal Binary
+        run: |
+          ls -la  build/bin/
+          mkdir -p artifacts
+          lipo -create -output artifacts/universal_binary \
+            build/bin/your_binary_arm64 \
+            build/bin/your_binary_x86_64
+
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: universal-macos-build
+          path: artifacts/*
+          retention-days: 1
