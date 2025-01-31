@@ -1,4 +1,4 @@
-name: Build Universal macOS Binary
+name: Build Universal macOS Binary with vcpkg
 
 on:
   push:
@@ -16,50 +16,56 @@ jobs:
         with:
           submodules: true
 
-      # - name: Install x86_64 Homebrew (if missing)
-      #   run: |
-      #     if [[ ! -d "/usr/local/Homebrew" ]]; then
-      #       echo "Installing Homebrew for x86_64..."
-      #       arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-      #     else
-      #       echo "x86_64 Homebrew already installed."
-      #     fi
-
       - name: Install Dependencies
         run: |
           # Install essential tools (native)
           brew update
           brew install cmake ninja llvm
 
-      - name: Install Universal Boost
+      - name: Install vcpkg
         run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+          echo "VCPKG_ROOT=$PWD" >> $GITHUB_ENV
 
-            # Compile Boost for both x86_64 and arm64
-            brew install boost --universal
+      - name: Install Boost for x86_64
+        run: |
+          CXXFLAGS="-arch x86_64" $VCPKG_ROOT/vcpkg install boost-exception boost-program-options boost-property-tree boost-asio boost-system boost-thread --triplet=x64-osx
 
-            # Verify Boost architecture
-            file $(brew --prefix boost)/lib/libboost_system.dylib
+      - name: Install Boost for arm64
+        run: |
+          CXXFLAGS="-arch arm64" $VCPKG_ROOT/vcpkg install boost-exception boost-program-options boost-property-tree boost-asio boost-system boost-thread --triplet=arm64-osx
 
-      - name: Configure Build
+      - name: Merge Boost Libraries into a Universal Binary
+        run: |
+          mkdir -p build/boost-universal
+          for lib in $(ls $VCPKG_ROOT/installed/x64-osx/lib/libboost_*.a); do
+            libname=$(basename $lib)
+            lipo -create -output build/boost-universal/$libname \
+              $VCPKG_ROOT/installed/x64-osx/lib/$libname \
+              $VCPKG_ROOT/installed/arm64-osx/lib/$libname
+          done
+
+      - name: Configure Build with vcpkg
         run: |
           mkdir -p build
-          pushd build
+          cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
                    -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
-                   -DBOOST_ROOT=$(brew --prefix boost)
-          popd
+                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+                   -DBOOST_ROOT=$(pwd)/boost-universal
+          cd ..
 
       - name: Build Project
         run: |
-          pushd build
+          cd build
           cmake --build .
-          popd
+          cd ..
 
-      - name: Prepare Universal Binary
+      - name: Merge App Binaries into a Universal Binary
         run: |
           mkdir -p artifacts
-
-          # Merge arm64 and x86_64 binaries (if built separately)
           lipo -create -output artifacts/universal_binary \
             build/bin/shinysocks_arm64 \
             build/bin/shinysocks_x86_64
