@@ -1,4 +1,4 @@
-name: Build Universal macOS Binary with vcpkg
+name: Build Universal macOS Binary with vcpkg (Manifest Mode)
 
 on:
   push:
@@ -22,24 +22,37 @@ jobs:
           brew update
           brew install cmake ninja llvm
 
-      - name: Install vcpkg (Classic Mode)
+      - name: Install vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           cd vcpkg
           ./bootstrap-vcpkg.sh
           echo "VCPKG_ROOT=$PWD" >> $GITHUB_ENV
-          echo "VCPKG_DEFAULT_TRIPLET=x64-osx" >> $GITHUB_ENV
-          echo "VCPKG_FEATURE_FLAGS=-manifests" >> $GITHUB_ENV  # Disable manifest mode
+
+      - name: Create vcpkg.json Manifest File
+        run: |
+          cat <<EOF > vcpkg.json
+          {
+            "name": "shinysocks",
+            "version": "1.0.0",
+            "dependencies": [
+              "boost-exception",
+              "boost-program-options",
+              "boost-property-tree",
+              "boost-asio",
+              "boost-system",
+              "boost-thread"
+            ]
+          }
+          EOF
 
       - name: Install Boost for x86_64
         run: |
-          unset VCPKG_FEATURE_FLAGS  # Ensure classic mode is used
-          CXXFLAGS="-arch x86_64" $VCPKG_ROOT/vcpkg install boost-exception boost-program-options boost-property-tree boost-asio boost-system boost-thread --triplet=x64-osx
+          CXXFLAGS="-arch x86_64" $VCPKG_ROOT/vcpkg install --triplet=x64-osx
 
       - name: Install Boost for arm64
         run: |
-          unset VCPKG_FEATURE_FLAGS  # Ensure classic mode is used
-          CXXFLAGS="-arch arm64" $VCPKG_ROOT/vcpkg install boost-exception boost-program-options boost-property-tree boost-asio boost-system boost-thread --triplet=arm64-osx
+          CXXFLAGS="-arch arm64" $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
 
       - name: Merge Boost Libraries into a Universal Binary
         run: |
