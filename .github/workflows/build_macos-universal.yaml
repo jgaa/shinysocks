@@ -1,8 +1,11 @@
 name: Build macOS Universal Binary
+
 on:
   push:
     branches:
       - 'master'
+  release:
+    types: [published]  # Trigger on published release
 
 jobs:
   build-universal-macos:
@@ -16,7 +19,6 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Install essential tools (native)
           brew update
           brew install cmake ninja llvm
 
@@ -27,7 +29,6 @@ jobs:
           ./bootstrap-vcpkg.sh
           echo "VCPKG_ROOT=$PWD" >> $GITHUB_ENV
           echo "$VCPKG_ROOT" >> $GITHUB_PATH
-          ls $VCPKG_ROOT
 
       - name: Install Boost for x86_64
         run: |
@@ -35,48 +36,44 @@ jobs:
 
       - name: Install Boost for arm64
         run: |
-            $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
+          $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
 
       - name: Configure Build with vcpkg for x86_64
         run: |
           mkdir -p build_x86_64
           cd build_x86_64
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES="x86_64"\
-                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"         
+                   -DCMAKE_OSX_ARCHITECTURES="x86_64" \
+                   -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build Project for x86_64
         run: |
           cd build_x86_64
           cmake --build .
-          # mkdir -p ../artifacts
-          # cp -v bin/shinysocks ../artifacts/shinysocks_x86_64
-          
+
       - name: Configure Build with vcpkg for arm64
         run: |
           mkdir -p build_arm64
           cd build_arm64
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" \
-                   -DCMAKE_OSX_ARCHITECTURES="arm64"\
+                   -DCMAKE_OSX_ARCHITECTURES="arm64" \
                    -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build Project for arm64
         run: |
           cd build_arm64
           cmake --build .
-          # mkdir -p ../artifacts
-          # cp -v bin/shinysocks ../artifacts/shinysocks_arm64
-      
-      - name : Combine the binaries into a universal binary
+
+      - name: Combine the binaries into a universal binary
         run: |
           mkdir -p artifacts
-          lipo -create -output artifacts/universal_binary \
+          lipo -create -output artifacts/shinysocks-macos \
             build_x86_64/bin/shinysocks \
             build_arm64/bin/shinysocks
-      
+
       - name: Verify Universal Binary
         run: |
-          file artifacts/universal_binary
+          file artifacts/shinysocks-macos
 
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
@@ -84,3 +81,11 @@ jobs:
           name: logfault-macos
           path: artifacts/*
           retention-days: 1
+
+      - name: Upload Release Artifact
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/shinysocks-macos
+          name: shinysocks-macos
+          token: ${{ secrets.GITHUB_TOKEN }}

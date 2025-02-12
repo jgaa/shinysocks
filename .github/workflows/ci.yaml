@@ -4,7 +4,9 @@ on:
   push:
   pull_request:
   schedule:
-    - cron: '0 0 1 * *' # This line schedules the workflow to run at 00:00 on the first day of every month
+    - cron: '0 0 1 * *' # Run at 00:00 on the first day of every month
+  release:
+    types: [published]  # Trigger when a release is published
 
 jobs:
   build:
@@ -14,10 +16,12 @@ jobs:
         include:
           - os: ubuntu-latest
             compiler: gcc
+            releaseArtifact: shinysocks-ubuntu
           - os: ubuntu-latest
             compiler: clang
           - os: windows-latest
             compiler: msvc
+            releaseArtifact: shinysocks-win64
           - os: macos-latest
             compiler:
 
@@ -79,7 +83,6 @@ jobs:
             ls -la build
           else
             mkdir build
-             #rm -rf build/*
           fi
           pushd build
           cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -99,21 +102,14 @@ jobs:
 
       - name: Test shinysocks
         run: |
-          # Start shinysocks in the background
           ./build/bin/shinysocks -c "" -l debug &
-          # Save its PID
           SHINYSOCKS_PID=$!
-          # Give shinysocks some time to start
           sleep 5
-          # Run curl command to verify that shinysocks works
           curl -L --socks5-hostname socks5://localhost:1080 https://raw.githubusercontent.com/jgaa/shinysocks/master/ci/test.txt
-          # Check the exit code of the curl command
           if [ $? -ne 0 ]; then
-            # If the curl command failed, fail the workflow
             echo "Curl command failed"
             exit 1
           fi
-          # Kill the shinysocks program
           kill $SHINYSOCKS_PID
         shell: bash
 
@@ -123,10 +119,17 @@ jobs:
           cp build/bin/* artifacts/
           cp shinysocks.conf artifacts/
 
-      - name: Archive artifacts
+      - name: Upload CI Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: shinysocks-${{ matrix.os }}-${{ matrix.compiler }}
           path: artifacts/*
           retention-days: 1
 
+      - name: Upload Release Artifact
+        if: github.event_name == 'release' && matrix.releaseArtifact
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          name: ${{ matrix.releaseArtifact }}
+          token: ${{ secrets.GITHUB_TOKEN }}
