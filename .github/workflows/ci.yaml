@@ -106,7 +106,7 @@ jobs:
         run: |
           mkdir -p artifacts
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            powershell Compress-Archive -Path build/bin/* -DestinationPath artifacts/${{ matrix.releaseArtifact }}.zip
+            powershell -Command "& { Get-ChildItem -Path build/bin/* | Compress-Archive -DestinationPath artifacts/${{ matrix.releaseArtifact }}.zip }"
           else
             tar -czf artifacts/${{ matrix.releaseArtifact }}.tar.gz -C build/bin .
           fi

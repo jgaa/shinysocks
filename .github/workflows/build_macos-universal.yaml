@@ -32,13 +32,13 @@ jobs:
 
       - name: Install Boost for x86_64
         run: |
-          $VCPKG_ROOT/vcpkg install boost --triplet=x64-osx
+          $VCPKG_ROOT/vcpkg install --triplet=x64-osx
 
       - name: Install Boost for arm64
         run: |
-          $VCPKG_ROOT/vcpkg install boost --triplet=arm64-osx
+          $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
 
-      - name: Configure Build for x86_64
+      - name: Configure Build with vcpkg for x86_64
         run: |
           mkdir -p build_x86_64
           cd build_x86_64
@@ -51,7 +51,7 @@ jobs:
           cd build_x86_64
           cmake --build .
 
-      - name: Configure Build for arm64
+      - name: Configure Build with vcpkg for arm64
         run: |
           mkdir -p build_arm64
           cd build_arm64
@@ -78,14 +78,14 @@ jobs:
 
       - name: Make tarfile
         run: |
-          cp -v shinysocks.conf build_universal/  # Ensure config file is copied
-          tar -czf artifacts/shinysocks-macos.tar.gz -C build_universal shinysocks-macos shinysocks.conf
+          cp -vshinysocks.conf build_universal/
+          tar -czf artifacts/shinysocks-macos.tar.gz -C build_universal shinysocks-macos
 
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: shinysocks-macos
-          path: artifacts/shinysocks-macos.tar.gz
+          name: logfault-macos
+          path: artifacts/*
           retention-days: 1
 
       - name: Upload Release Artifact
