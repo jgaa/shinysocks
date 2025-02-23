@@ -17,13 +17,9 @@ jobs:
           - os: ubuntu-latest
             compiler: gcc
             releaseArtifact: shinysocks-ubuntu
-          - os: ubuntu-latest
-            compiler: clang
           - os: windows-latest
             compiler: msvc
             releaseArtifact: shinysocks-win64
-          - os: macos-latest
-            compiler:
 
     steps:
       - name: Checkout code
@@ -54,11 +50,6 @@ jobs:
           ninja: true
           vcpkg: true
           cppcheck: false
-
-      - name: Install compiler for Macos
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          brew install llvm
 
       - name: Prepare the PATH
         run: |
@@ -93,8 +84,6 @@ jobs:
         run: |
             if [[ "${{ runner.os }}" == "Windows" ]]; then
               choco install curl
-            elif [[ "${{ runner.os }}" == "macOS" ]]; then
-              brew install curl
             else
               sudo apt-get install -y curl
             fi
@@ -116,8 +105,12 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p artifacts
-          cp build/bin/* artifacts/
-          cp shinysocks.conf artifacts/
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            powershell Compress-Archive -Path build/bin/* -DestinationPath artifacts/${{ matrix.releaseArtifact }}.zip
+          else
+            tar -czf artifacts/${{ matrix.releaseArtifact }}.tar.gz -C build/bin .
+          fi
+        shell: bash
 
       - name: Upload CI Artifacts
         uses: actions/upload-artifact@v4

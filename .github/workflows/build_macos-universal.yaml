@@ -32,13 +32,13 @@ jobs:
 
       - name: Install Boost for x86_64
         run: |
-          $VCPKG_ROOT/vcpkg install --triplet=x64-osx
+          $VCPKG_ROOT/vcpkg install boost --triplet=x64-osx
 
       - name: Install Boost for arm64
         run: |
-          $VCPKG_ROOT/vcpkg install --triplet=arm64-osx
+          $VCPKG_ROOT/vcpkg install boost --triplet=arm64-osx
 
-      - name: Configure Build with vcpkg for x86_64
+      - name: Configure Build for x86_64
         run: |
           mkdir -p build_x86_64
           cd build_x86_64
@@ -51,7 +51,7 @@ jobs:
           cd build_x86_64
           cmake --build .
 
-      - name: Configure Build with vcpkg for arm64
+      - name: Configure Build for arm64
         run: |
           mkdir -p build_arm64
           cd build_arm64
@@ -67,25 +67,31 @@ jobs:
       - name: Combine the binaries into a universal binary
         run: |
           mkdir -p artifacts
-          lipo -create -output artifacts/shinysocks-macos \
+          mkdir -p build_universal
+          lipo -create -output build_universal/shinysocks-macos \
             build_x86_64/bin/shinysocks \
             build_arm64/bin/shinysocks
 
       - name: Verify Universal Binary
         run: |
-          file artifacts/shinysocks-macos
+          file build_universal/shinysocks-macos
+
+      - name: Make tarfile
+        run: |
+          cp -v shinysocks.conf build_universal/  # Ensure config file is copied
+          tar -czf artifacts/shinysocks-macos.tar.gz -C build_universal shinysocks-macos shinysocks.conf
 
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: logfault-macos
-          path: artifacts/*
+          name: shinysocks-macos
+          path: artifacts/shinysocks-macos.tar.gz
           retention-days: 1
 
       - name: Upload Release Artifact
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/shinysocks-macos
+          files: artifacts/shinysocks-macos.tar.gz
           name: shinysocks-macos
           token: ${{ secrets.GITHUB_TOKEN }}
