@@ -78,7 +78,7 @@ jobs:
 
       - name: Make tarfile
         run: |
-          cp -vshinysocks.conf build_universal/
+          cp -v shinysocks.conf build_universal/
           tar -czf artifacts/shinysocks-macos.tar.gz -C build_universal shinysocks-macos
 
       - name: Archive Artifacts
