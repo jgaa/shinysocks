@@ -8,7 +8,7 @@ endif()
 project(shinysocks
     DESCRIPTION "Socks Proxy server"
     HOMEPAGE_URL https://github.com/jgaa/shinysocks
-    VERSION 1.4.0
+    VERSION 1.4.1
     LANGUAGES CXX
 )
 
@@ -29,7 +29,6 @@ if(USE_STATIC_BOOST)
 endif()
 
 find_package(Boost ${USE_BOOST_VERSION} REQUIRED COMPONENTS
-    system
     program_options
     serialization
     coroutine
